@@ -17,14 +17,10 @@ app = Dash(
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
-    dcc.Link(
     html.H1("Resale Rangers", style={
         'color': 'white',
         'fontFamily': 'Roboto'
     }),
-        href = "/",
-        style={'textDecoration': 'none'}
-    ),
     page_container,
 ], style={
     'backgroundColor': '#ff963b'

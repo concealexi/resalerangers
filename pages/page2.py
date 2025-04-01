@@ -1,4 +1,4 @@
-from dash import html, register_page
+from dash import html, register_page, dcc
 
 register_page(__name__, path="/page-2")
 
