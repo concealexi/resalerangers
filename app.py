@@ -7,7 +7,7 @@ external_stylesheets = [
     "https://fonts.googleapis.com/css2?family=Roboto&display=swap",
     "https://unpkg.com/modern-css-reset/dist/reset.min.css"
 ]
-
+# nadip coba bikin branch dan commit
 app = Dash(
     __name__,
     use_pages=True,
