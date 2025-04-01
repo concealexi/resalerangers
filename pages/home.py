@@ -31,28 +31,64 @@ layout = html.Div([
         html.Div([
 
             # Newbie Card (clickable)
-            dcc.Link(html.Div([
-                html.Div(style={  
-                    'height': '450px',
-                    'backgroundColor': '#ff963b',
-                    'borderRadius': '10px',
-                    'marginBottom': '20px'
-                }),
-                html.H3("Newbie", style={'fontFamily': 'Roboto'}),
-                html.P("You don't know where you want to live and want to find something fitting your price range", style={'fontFamily': 'Roboto'})
-            ], className="hover-card", style=card_style), href='/page-2', style={'textDecoration': 'none'}),
+            dcc.Link(
+                html.Div([
+                    html.Div(
+                        # Add an image inside the orange box
+                        children=[
+                            html.Img(
+                                src='/assets/newbie.jpg',  # Replace with your image path or URL
+                                style={
+                                    'width': '100%',
+                                    'height': '100%',
+                                    'objectFit': 'cover',
+                                    'borderRadius': '10px'
+                                }
+                            )
+                        ],
+                        style={  
+                            'height': '450px',
+                            'backgroundColor': '#ff963b',
+                            'borderRadius': '10px',
+                            'marginBottom': '20px'
+                        }
+                    ),
+                    html.H3("Newbie", style={'fontFamily': 'Roboto'}),
+                    html.P("You don't know where you want to live and want to find something fitting your price range", style={'fontFamily': 'Roboto'})
+                ], className="hover-card", style=card_style),
+                href='/page-2',
+                style={'textDecoration': 'none'}
+            ),
 
             # Expert Card (clickable)
-            dcc.Link(html.Div([
-                html.Div(style={
-                    'height': '450px',
-                    'backgroundColor': '#ff963b',
-                    'borderRadius': '10px',
-                    'marginBottom': '20px'
-                }),
-                html.H3("Expert", style={'fontFamily': 'Roboto'}),
-                html.P("You have an idea on where you want to live and check whether the given price is reasonable", style={'fontFamily': 'Roboto'})
-            ], className="hover-card", style=card_style), href='/page-3', style={'textDecoration': 'none'})
+            dcc.Link(
+                html.Div([
+                    html.Div(
+                        # Add an image inside the orange box
+                        children=[
+                            html.Img(
+                                src='/assets/expert.jpg',  # Replace with your image path or URL
+                                style={
+                                    'width': '100%',
+                                    'height': '100%',
+                                    'objectFit': 'cover',
+                                    'borderRadius': '10px'
+                                }
+                            )
+                        ],
+                        style={
+                            'height': '450px',
+                            'backgroundColor': '#ff963b',
+                            'borderRadius': '10px',
+                            'marginBottom': '20px'
+                        }
+                    ),
+                    html.H3("Expert", style={'fontFamily': 'Roboto'}),
+                    html.P("You have an idea on where you want to live and check whether the given price is reasonable", style={'fontFamily': 'Roboto'})
+                ], className="hover-card", style=card_style),
+                href='/page-3',
+                style={'textDecoration': 'none'}
+            )
 
         ], style={
             'display': 'flex',
