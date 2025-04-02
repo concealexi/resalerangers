@@ -1,4 +1,14 @@
 from dash import html, dcc, register_page, callback, Output, Input, State
+import pandas as pd
+import dash_leaflet as dl
+
+# Load the CSV file
+hdb_df = pd.read_csv('dataset/hdbdistamenitiescracked.csv')
+
+# Preprocess: get unique towns and map postal codes by town
+towns = sorted(hdb_df['town'].dropna().unique())
+town_postal_map = hdb_df.groupby('town')['postal_code'].apply(list).to_dict()
+
 
 register_page(__name__, path="/page-2")
 
@@ -10,56 +20,25 @@ layout = html.Div([
     }),
 
     html.Div([
-        html.Label("Enter Postal Code (optional):", style={'fontFamily': 'Helvetica'}),
-        dcc.Input(
-            id='newbie-postal-code',
-            type='number',
-            placeholder='e.g. 123456',
-            style={
-                'padding': '10px',
-                'fontSize': '16px',
-                'width': '100%',
-                'marginBottom': '25px',
-                'fontFamily': 'Helvetica'
-            }
-        ),
 
-        html.Label("Or Select a Town:", style={'fontFamily': 'Helvetica'}),
+        # Town Dropdown
+        html.Label("Select a Town:", style={'fontFamily': 'Helvetica'}),
         dcc.Dropdown(
             id='newbie-town-dropdown',
-            options=[
-                {'label': 'North - Sembawang', 'value': 'Sembawang'},
-                {'label': 'North - Woodlands', 'value': 'Woodlands'},
-                {'label': 'North - Yishun', 'value': 'Yishun'},
-                {'label': 'North-East - Ang Mo Kio', 'value': 'Ang Mo Kio'},
-                {'label': 'North-East - Hougang', 'value': 'Hougang'},
-                {'label': 'North-East - Punggol', 'value': 'Punggol'},
-                {'label': 'North-East - Sengkang', 'value': 'Sengkang'},
-                {'label': 'North-East - Serangoon', 'value': 'Serangoon'},
-                {'label': 'East - Bedok', 'value': 'Bedok'},
-                {'label': 'East - Pasir Ris', 'value': 'Pasir Ris'},
-                {'label': 'East - Tampines', 'value': 'Tampines'},
-                {'label': 'West - Bukit Batok', 'value': 'Bukit Batok'},
-                {'label': 'West - Bukit Panjang', 'value': 'Bukit Panjang'},
-                {'label': 'West - Choa Chu Kang', 'value': 'Choa Chu Kang'},
-                {'label': 'West - Clementi', 'value': 'Clementi'},
-                {'label': 'West - Jurong East', 'value': 'Jurong East'},
-                {'label': 'West - Jurong West', 'value': 'Jurong West'},
-                {'label': 'West - Tengah', 'value': 'Tengah'},
-                {'label': 'Central - Bishan', 'value': 'Bishan'},
-                {'label': 'Central - Bukit Merah', 'value': 'Bukit Merah'},
-                {'label': 'Central - Bukit Timah', 'value': 'Bukit Timah'},
-                {'label': 'Central - Central Area', 'value': 'Central Area'},
-                {'label': 'Central - Geylang', 'value': 'Geylang'},
-                {'label': 'Central - Kallang/ Whampoa', 'value': 'Kallang/ Whampoa'},
-                {'label': 'Central - Marine Parade', 'value': 'Marine Parade'},
-                {'label': 'Central - Queenstown', 'value': 'Queenstown'},
-                {'label': 'Central - Toa Payoh', 'value': 'Toa Payoh'},
-            ],
+            options=[{'label': town.title(), 'value': town} for town in towns],
             placeholder="Select a town",
+            style={'marginBottom': '25px', 'fontFamily': 'Helvetica'}
+        ),
+
+        # Postal Code Dropdown (dynamic)
+        html.Label("Available Postal Codes:", style={'fontFamily': 'Helvetica'}),
+        dcc.Dropdown(
+            id='newbie-postal-dropdown',
+            placeholder="Select a postal code",
             style={'marginBottom': '30px', 'fontFamily': 'Helvetica'}
         ),
 
+        # Flat Type Dropdown
         html.Label("Flat Type:", style={'fontFamily': 'Helvetica'}),
         dcc.Dropdown(
             id='expert-flat-type',
@@ -76,6 +55,7 @@ layout = html.Div([
             style={'marginBottom': '15px', 'fontFamily': 'Helvetica'}
         ),
 
+        # Floor Level Dropdown
         html.Label("Floor Level:", style={'fontFamily': 'Helvetica'}),
         dcc.Dropdown(
             id='expert-floor-level',
@@ -88,7 +68,7 @@ layout = html.Div([
             style={'marginBottom': '30px', 'fontFamily': 'Helvetica'}
         ),
 
-        # Stylized Button inside bordered box
+        # Submit button inside a styled outer box
         html.Div([
             html.Button("Submit", id="newbie-submit", n_clicks=0, style={
                 'backgroundColor': '#ff963b',
@@ -102,7 +82,7 @@ layout = html.Div([
             })
         ], style={
             'border': '2px solid #ccc',
-            'padding': '2px',
+            'padding': '10px',
             'borderRadius': '12px',
             'backgroundColor': '#fffaf3',
             'textAlign': 'center',
@@ -111,24 +91,90 @@ layout = html.Div([
             'fontFamily': 'Helvetica'
         }),
 
-        html.Div(id='newbie-output', style={'marginTop': '30px', 'fontFamily': 'Helvetica'})
+        # Output text
+        html.Div(id='newbie-output', style={'marginTop': '30px', 'fontFamily': 'Helvetica'}),
+
+        # 🔍 Map
+        # 🔍 Map
+        html.Div([
+            dl.Map(
+                id="newbie-map",
+                center=[1.3521, 103.8198],  # default center (static)
+                zoom=11,  # default zoom (static)
+                children=[
+                    dl.TileLayer(),
+                    dl.Marker(id="newbie-marker", position=[1.3521, 103.8198], children=[
+                        dl.Popup(id="newbie-popup", children="Selected Location")
+                    ])
+                ],
+                style={'width': '100%', 'height': '400px', 'marginTop': '20px'}
+            )
+        ], style={'marginTop': '40px'})
     ], style={'width': '50%', 'margin': '0 auto', 'padding': '40px', 'fontFamily': 'Helvetica'})
 ])
 
 @callback(
     Output('newbie-output', 'children'),
     Input('newbie-submit', 'n_clicks'),
-    State('newbie-postal-code', 'value'),
+    State('newbie-postal-dropdown', 'value'),
     State('newbie-town-dropdown', 'value'),
 )
 def display_newbie_response(n_clicks, postal_code, town):
     if n_clicks > 0:
         if postal_code and not town:
             return html.Div(f"You've entered Postal Code: {postal_code}. We'll search properties around this area!")
+
         elif town and not postal_code:
             return html.Div(f"You've selected the town: {town}. We'll help you find the best listings there!")
-        elif town and postal_code:
-            return html.Div(f"You entered both Postal Code: {postal_code} and selected {town}. We’ll prioritize the postal code but use town as fallback.")
-        else:
-            return html.Div("Please either enter a postal code or select a town.", style={'color': 'red'})
 
+        elif town and postal_code:
+            # Fix: ensure type consistency for matching
+            match = hdb_df[hdb_df['postal_code'].astype(str) == str(postal_code)]
+
+            if not match.empty:
+                block = str(match.iloc[0]['block']).strip()
+                street = match.iloc[0]['street_name'].strip().title()
+                return html.Div(f"You have entered {block} {street}, {town.title()} {postal_code}. We will search previous sales at this given address.")
+            else:
+                return html.Div(f"You entered Postal Code: {postal_code} and selected {town}, but we couldn't find the address in our database.")
+
+        else:
+            return html.Div("Please either select a postal code or a town.", style={'color': 'red'})
+
+@callback(
+    Output('newbie-postal-dropdown', 'options'),
+    Input('newbie-town-dropdown', 'value')
+)
+def update_postal_options(selected_town):
+    if selected_town and selected_town in town_postal_map:
+        raw_postals = town_postal_map[selected_town]
+
+        # ✅ Clean & deduplicate
+        clean_postals = {int(p) for p in raw_postals if pd.notna(p) and str(p).isdigit()}
+        sorted_postals = sorted(clean_postals)
+
+        return [{'label': str(p), 'value': str(p)} for p in sorted_postals]
+    return []
+
+@callback(
+    Output('newbie-marker', 'position'),
+    Output('newbie-popup', 'children'),
+    Input('newbie-submit', 'n_clicks'),
+    State('newbie-postal-dropdown', 'value'),
+    State('newbie-town-dropdown', 'value')
+)
+def update_map_marker_with_popup(n_clicks, postal_code, town):
+    if n_clicks > 0 and postal_code:
+        postal_str = str(postal_code)
+
+        match = hdb_df[hdb_df['postal_code'] == postal_str]
+
+        if not match.empty:
+            lat = match.iloc[0]['latitude']
+            lon = match.iloc[0]['longitude']
+            block = str(match.iloc[0]['block']).strip()
+            street = match.iloc[0]['street_name'].strip().title()
+            address = f"{block} {street}, {town.title()} {postal_code}"
+            return [lat, lon], address
+
+    return [1.3521, 103.8198], "Selected Location"
