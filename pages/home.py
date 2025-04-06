@@ -3,104 +3,240 @@ from dash import html, dcc, register_page
 
 register_page(__name__, path="/")
 
-# Card style (shared)
+# Shared card style for the cards section
 card_style = {
-    'backgroundColor': 'white',
-    'padding': '20px 20px 60px 20px',
-    'borderRadius': '10px',
     'width': '400px',
+    'height': '400px',
+    'border': '6px solid #944028',
+    'borderRadius': '20px',
+    'padding': '20px',
+    'display': 'flex',
+    'flexDirection': 'column',
+    'alignItems': 'center',
     'textAlign': 'center',
-    'boxShadow': '0 4px 8px rgba(0,0,0,0.1)',
-    'transition': 'transform 0.3s, box-shadow 0.3s',
-    'cursor': 'pointer',
-    'textDecoration': 'none',
+    'backgroundColor': '#fff'
 }
 
-layout = html.Div([
-    html.Div([
-
-        # Title
-        html.H1("Choose Your Persona!", style={
+# Top section with title, subtitle, and horizontal line with circles
+top_section = html.Div([
+    html.H1(
+        "'Fair' Price",
+        style={
             'textAlign': 'center',
-            'color': 'white',
-            'fontFamily': 'Roboto, sans-serif',
-            'marginTop': '30px'
-        }),
+            'fontFamily': 'Inter, sans-serif',
+            'fontWeight': 'bold',
+            'fontSize': '2.2rem',
+            'margin': '20px 0 5px 0',
+            'color': 'black'
+        }
+    ),
+    html.P(
+        [
+            "to buy or not to buy",
+            html.Br(),
+            "- someone important probably"
+        ],
+        style={
+            'textAlign': 'center',
+            'fontFamily': 'Inter, sans-serif',
+            'margin': '0 0 20px 0',
+            'color': 'black',
+            'fontWeight': 'bold'
+        }
+    ),
+    html.Div(
+        style={
+            'width': '80%',
+            'margin': '0 auto 20px auto',
+            'borderBottom': '3px solid #944028',
+            'position': 'relative'
+        },
+        children=[
+            # Left circle
+            html.Div(
+                style={
+                    'width': '15px',
+                    'height': '15px',
+                    'backgroundColor': '#944028',
+                    'borderRadius': '50%',
+                    'position': 'absolute',
+                    'left': '-7.5px',
+                    'top': '-6px'
+                }
+            ),
+            # Right circle
+            html.Div(
+                style={
+                    'width': '15px',
+                    'height': '15px',
+                    'backgroundColor': '#944028',
+                    'borderRadius': '50%',
+                    'position': 'absolute',
+                    'right': '-7.5px',
+                    'top': '-6px'
+                }
+            )
+        ]
+    )
+])
 
-        # Cards container
-        html.Div([
+layout = html.Div([
+    # Top section moved from app.py
+    top_section,
 
-            # Newbie Card (clickable)
+    # Prompt text
+    html.Div(
+        [
+            "Firstly, what kind of user are you?",
+            html.Br(),
+            "This lets us better address your needs"
+        ],
+        style={
+            'textAlign': 'center',
+            'fontFamily': 'Inter, sans-serif',
+            'fontWeight': 'bold',
+            'color': 'black',
+            'marginBottom': '40px',
+            'fontSize': '1.1rem'
+        }
+    ),
+
+    # Cards container with links
+    html.Div(
+        children=[
+            # Left Card
             dcc.Link(
                 html.Div([
+                    # Icon container at the top
                     html.Div(
-                        # Add an image inside the orange box
-                        children=[
-                            html.Img(
-                                src='/assets/newbie.jpg',  # Replace with your image path or URL
-                                style={
-                                    'width': '100%',
-                                    'height': '100%',
-                                    'objectFit': 'cover',
-                                    'borderRadius': '10px'
-                                }
-                            )
-                        ],
-                        style={  
-                            'height': '450px',
-                            'backgroundColor': '#ff963b',
-                            'borderRadius': '10px',
-                            'marginBottom': '20px'
+                        html.Img(
+                            src='https://img.icons8.com/ios-filled/100/marker.png',
+                            style={
+                                'width': '90px',
+                                'marginBottom': '10px',
+                                'filter': 'invert(45%) sepia(100%) saturate(250%) hue-rotate(340deg) brightness(70%) contrast(115%)'
+                            }
+                        ),
+                        style={
+                            'width': '100%',
+                            'display': 'flex',
+                            'justifyContent': 'center',
+                            'marginTop': '20px'
                         }
                     ),
-                    html.H3("Newbie", style={'fontFamily': 'Roboto'}),
-                    html.P("You don't know where you want to live and want to find something fitting your price range", style={'fontFamily': 'Roboto'})
-                ], className="hover-card", style=card_style),
-                href='/page-2',
+                    # Spacer to push text down
+                    html.Div(style={'flexGrow': 1}),
+                    # Text container
+                    html.Div([
+                        html.H2([
+                            "I want to check a",
+                            html.Br(),
+                            "specific location"
+                        ], style={
+                            'fontFamily': 'Inter, sans-serif', 
+                            'color': '#333',
+                            'height': '110px',
+                            'marginBottom': '-12.5px'
+                        }),
+                        html.P(
+                            [
+                                "We can predict a price range of a",
+                                html.Br(),
+                                "flat based on its key characteristics"
+                            ],
+                            style={
+                                'fontFamily': 'Inter, sans-serif', 
+                                'color': '#555',
+                                'height': '62.5px'
+                            }
+                        )
+                    ], style={'marginBottom': '20px'})
+                ], style=card_style),
+                href='/input-specific-dummy',
                 style={'textDecoration': 'none'}
             ),
 
-            # Expert Card (clickable)
+            # Right Card
             dcc.Link(
                 html.Div([
+                    # Icon container at the top
                     html.Div(
-                        # Add an image inside the orange box
-                        children=[
-                            html.Img(
-                                src='/assets/expert.jpg',  # Replace with your image path or URL
-                                style={
-                                    'width': '100%',
-                                    'height': '100%',
-                                    'objectFit': 'cover',
-                                    'borderRadius': '10px'
-                                }
-                            )
-                        ],
+                        html.Img(
+                            src='https://img.icons8.com/ios-filled/100/map.png',
+                            style={
+                                'width': '90px',
+                                'marginBottom': '10px',
+                                'filter': 'invert(45%) sepia(100%) saturate(250%) hue-rotate(340deg) brightness(70%) contrast(115%)'
+                            }
+                        ),
                         style={
-                            'height': '450px',
-                            'backgroundColor': '#ff963b',
-                            'borderRadius': '10px',
-                            'marginBottom': '20px'
+                            'width': '100%',
+                            'display': 'flex',
+                            'justifyContent': 'center',
+                            'marginTop': '20px'
                         }
                     ),
-                    html.H3("Expert", style={'fontFamily': 'Roboto'}),
-                    html.P("You have an idea on where you want to live and check whether the given price is reasonable", style={'fontFamily': 'Roboto'})
-                ], className="hover-card", style=card_style),
-                href='/page-3',
+                    # Spacer to push text down
+                    html.Div(style={'flexGrow': 1}),
+                    # Text container
+                    html.Div([
+                        html.H2([
+                            "I want to look",
+                            html.Br(),
+                            "at general areas"
+                        ], style={
+                            'fontFamily': 'Inter, sans-serif', 
+                            'color': '#333',
+                            'height': '110px',
+                            'marginBottom': '-25px'
+                        }),
+                        html.P(
+                            [
+                                "We can provide past transactional",
+                                html.Br(),
+                                "data based on the town of choice",
+                                html.Br(),
+                                "and some characteristics"
+                            ],
+                            style={
+                                'fontFamily': 'Inter, sans-serif', 
+                                'color': '#555',
+                                'height': '75px'
+                            }
+                        )
+                    ], style={'marginBottom': '20px'})
+                ], style=card_style),
+                href='/input-general',
                 style={'textDecoration': 'none'}
             )
-
-        ], style={
+        ],
+        style={
             'display': 'flex',
             'justifyContent': 'center',
-            'gap': '40px',
-            'marginTop': '50px'
-        }),
+            'gap': '150px',
+            'flexWrap': 'wrap',
+            'margin': '0 auto'
+        }
+    ),
 
-    ], style={
-        'padding': '40px',
-        'backgroundColor': '#ff963b',
-        'minHeight': '100vh',
-        'fontFamily': 'Roboto, sans-serif'
-    })
-])
+    # Footer or small text section
+    html.Div(
+        "This is a property of Resale Rangers",
+        style={
+            'textAlign': 'center',
+            'fontFamily': 'Inter, sans-serif',
+            'color': '#888',
+            'marginTop': '150px',
+            'fontSize': '0.9rem'
+        }
+    )
+],
+style={
+    'margin': '0',
+    'padding': '0',
+    'minHeight': '100vh',
+    'backgroundColor': '#FFFFFF',
+    'display': 'flex',
+    'flexDirection': 'column',
+    'justifyContent': 'flex-start'
+})
