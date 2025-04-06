@@ -14,8 +14,6 @@ app = Dash(
     external_stylesheets=external_stylesheets
 )
 
-# Since all home page components are now moved into home.py,
-# we simply include the location and page container here.
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     page_container,
