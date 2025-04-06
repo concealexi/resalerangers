@@ -1,8 +1,11 @@
-from dash import html, dcc, register_page, callback, Output, Input, State
+from dash import html, dcc, register_page, callback, Output, Input, State, no_update
 
-register_page(__name__, path="/page-3")
+register_page(__name__, path="/input-specific")
 
 layout = html.Div([
+    # Hidden location component for redirection
+    dcc.Location(id='redirect-location', refresh=True),
+    
     html.H2("Welcome to the Expert Page", style={'fontFamily': 'Roboto', 'textAlign': 'center'}),
     html.P("We will help you to predict a reasonable price for HDBs with your preferred features! "
            "Enter a postal code for an area that you want to live in, the flat type, and the floor level "
@@ -61,20 +64,14 @@ layout = html.Div([
             'borderRadius': '8px'
         }),
 
-        # Output
+        # Div for error messages
         html.Div(id='expert-output', style={'marginTop': '30px', 'fontFamily': 'Roboto'})
     ], style={'width': '50%', 'margin': '0 auto'})
 ])
 
-def postal_minus_one(postal_code):
-    try:
-        return postal_code - 1
-    except TypeError:
-        return None
-
-
 @callback(
-    Output('expert-output', 'children'),
+    [Output('redirect-location', 'pathname'),
+     Output('expert-output', 'children')],
     Input('submit-expert-input', 'n_clicks'),
     State('expert-postal-code', 'value'),
     State('expert-flat-type', 'value'),
@@ -82,16 +79,9 @@ def postal_minus_one(postal_code):
 )
 def capture_expert_input(n_clicks, postal_code, flat_type, floor_level):
     if n_clicks > 0:
+        # Check if any field is missing
         if None in (postal_code, flat_type, floor_level):
-            return html.Div("Please fill in all the fields.", style={'color': 'red'})
+            return no_update, html.Div("Please fill in all the fields.", style={'color': 'red'})
         else:
-            adjusted_postal = postal_minus_one(postal_code)
-            return html.Div([
-                html.H4("Inputs captured successfully!", style={'color': 'green'}),
-                html.Ul([
-                    html.Li(f"Postal Code: {postal_code}"),
-                    html.Li(f"Flat Type: {flat_type}"),
-                    html.Li(f"Floor Level: {floor_level}"),
-                    html.Li(f"Postal Code - 1: {adjusted_postal}")
-                ])
-            ])
+            return "/page-5", None
+    return no_update, None

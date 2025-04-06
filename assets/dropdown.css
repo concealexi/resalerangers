@@ -1,0 +1,31 @@
+.my-dropdown [class*="control"] {
+    border: 1px solid #ccc !important;
+    border-radius: 4px !important;
+    /* Lower the padding to reduce overall height */
+    padding: 6px 10px !important;
+    background-color: white !important;
+    box-shadow: none !important;
+
+    /* Either remove or comment out min-height to let padding control the size */
+    /* min-height: 40px !important; */
+}
+
+.my-dropdown [class*="-value-container"] {
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 !important;
+}
+
+.my-dropdown [class*="-placeholder"] {
+    margin: 10px !important;
+    padding: 4px 0 0 !important;   /* 6px top padding, 0 left/right/bottom */
+    line-height: normal !important;
+}
+
+.my-dropdown [class*="-control"] *,
+/* 2) The value/placeholder container and all its children */
+.my-dropdown [class*="-value-container"] * {
+  font-family: 'Inter', sans-serif !important;
+  color: #757575 !important;
+}
+
