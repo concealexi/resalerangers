@@ -10,7 +10,7 @@ towns = sorted(hdb_df['town'].dropna().unique())
 town_postal_map = hdb_df.groupby('town')['postal_code'].apply(list).to_dict()
 
 
-register_page(__name__, path="/page-2")
+register_page(__name__, path="/input-general")
 
 layout = html.Div([
     html.H2("Find Your Ideal Home!", style={
