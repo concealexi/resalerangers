@@ -1,0 +1,33 @@
+/* Make the rail (unselected portion) gray */
+.my-slider [class*="rc-slider-rail"] {
+    background-color: #ccc !important; /* or any gray shade you like */
+    height: 6px !important; 
+}
+
+.my-slider [class*="rc-slider-track"] {
+    background-color: #7f0019 !important;
+}
+
+.my-slider [class*="rc-slider-dot-active"] {
+    border-color: #7f0019 !important;
+}
+
+/* Make the handle (knob) black */
+.my-slider [class*="rc-slider-handle"] {
+    background-color: #000 !important; 
+    border: none !important;
+    width: 16px !important;
+    height: 16px !important;
+    margin-top: -5px !important; /* center vertically if track is 6px tall */
+    cursor: pointer;
+}
+
+.my-slider [class*="rc-slider-mark"] {
+    display: none !important;
+  }
+
+.my-slider {
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+    padding-bottom: 10px !important;
+}

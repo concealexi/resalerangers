@@ -15,7 +15,6 @@ common_input_style = {
     'backgroundColor': 'white'
 }
 
-# For dropdowns, we remove our own border settings so that our custom CSS can take over
 common_dropdown_style = {
     'width': '100%',
     'fontSize': '16px',
@@ -65,157 +64,116 @@ layout = html.Div(
         # Hidden location component for redirection
         dcc.Location(id='redirect-location-dummy', refresh=True),
 
+        # -- Custom Toggle (Segmented Control) using manual inputs/labels --
+        html.Div(
+            dcc.RadioItems(
+                id='input-mode',
+                options=[
+                    {'label':'Manual Input',            'value':'manual'},
+                    {'label':'Input from PropertyGuru', 'value':'guru'}
+                ],
+                value='manual',
+                inline=True,
+                className='mode-toggle-container',
+                labelClassName='mode-toggle-label',
+                inputClassName='mode-toggle-input'
+            ),
+            style={'display':'flex','justifyContent':'center','marginBottom':'30px'}
+        ),
+
         # -- Main Form Container --
         html.Div(
+            id='manual-input-container',
+            style={'display':'block','width':'600px','margin':'0 auto','textAlign':'left'},
             children=[
                 # Postal Code
-                html.Label("Postal Code", style={
-                    'fontFamily': 'Inter, sans-serif',
-                    'fontWeight': 'bold',
-                    'display': 'block',
-                    'marginBottom': '5px'
-                }),
-                dcc.Input(
-                    id='expert-postal-code',
-                    type='number',
-                    placeholder='Enter postal code',
-                    className='no-spinner',
-                    style=common_input_style
-                ),
+                html.Label('Postal Code', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold','marginBottom':'5px'}),
+                dcc.Input(id='expert-postal-code', type='number', placeholder='Enter postal code',
+                          className='no-spinner',
+                          style=common_input_style),
 
-                # Flat Type – add a custom class to target in CSS
-                html.Label("Flat Type", style={
-                    'fontFamily': 'Inter, sans-serif',
-                    'fontWeight': 'bold',
-                    'display': 'block',
-                    'marginBottom': '5px'
-                }),
-                dcc.Dropdown(
-                    id='expert-flat-type',
-                    options=[
-                        {'label': '1 Room', 'value': '1 ROOM'},
-                        {'label': '2 Room', 'value': '2 ROOM'},
-                        {'label': '3 Room', 'value': '3 ROOM'},
-                        {'label': '4 Room', 'value': '4 ROOM'},
-                        {'label': '5 Room', 'value': '5 ROOM'},
-                        {'label': 'Executive', 'value': 'EXECUTIVE'},
-                        {'label': 'Multi-Generation', 'value': 'MULTI-GENERATION'}
-                    ],
-                    placeholder='Select Flat Type',
-                    className="my-dropdown",
-                    style=common_dropdown_style
-                ),
+                # Flat Type
+                html.Label('Flat Type', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold','marginBottom':'5px'}),
+                dcc.Dropdown(id='expert-flat-type', options=[
+                    {'label':'1 Room','value':'1 ROOM'},
+                    {'label':'2 Room','value':'2 ROOM'},
+                    {'label':'3 Room','value':'3 ROOM'},
+                    {'label':'4 Room','value':'4 ROOM'},
+                    {'label':'5 Room','value':'5 ROOM'},
+                    {'label':'Executive','value':'EXECUTIVE'},
+                    {'label':'Multi-Generation','value':'MULTI-GENERATION'}
+                ], placeholder='Select Flat Type', className='my-dropdown', style=common_dropdown_style),
 
                 # Square Area
-                html.Label("Square Area (0–500)", style={
-                    'fontFamily': 'Inter, sans-serif',
-                    'fontWeight': 'bold',
-                    'display': 'block',
-                    'marginBottom': '5px'
-                }),
-                html.Div(
-                    dcc.Slider(
-                        id='expert-square-area',
-                        min=0,
-                        max=500,
-                        step=1,
-                        value=250,
-                        marks={0: '0', 500: '500'},
-                        tooltip={'placement': 'bottom'}
-                    ),
-                    style={'marginBottom': '30px'}
-                ),
+                html.Div([
+                    html.Div([
+                        html.Label('Square Area (sqm)', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
+                        html.Div('0–500', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'})
+                    ], style={'display':'flex','justifyContent':'space-between','marginBottom':'10px'}),
+                    dcc.Slider(id='expert-square-area', min=0, max=500, value=250, step=1,
+                               tooltip={'placement':'bottom'}, className='my-slider')
+                ], style={'marginBottom':'30px'}),
 
-                # Floor Level – add same custom class
-                html.Label("Floor Level", style={
-                    'fontFamily': 'Inter, sans-serif',
-                    'fontWeight': 'bold',
-                    'display': 'block',
-                    'marginBottom': '5px'
-                }),
-                dcc.Dropdown(
-                    id='expert-floor-level',
-                    options=[
-                        {'label': 'Low (1-3)', 'value': 'Low'},
-                        {'label': 'Mid (4-9)', 'value': 'Mid'},
-                        {'label': 'High (10+)', 'value': 'High'}
-                    ],
-                    placeholder='Select Floor Level',
-                    className="my-dropdown",
-                    style=common_dropdown_style
-                ),
+                # Floor Level (Manual)
+                html.Label('Floor Level', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold','marginBottom':'5px'}),
+                dcc.Dropdown(id='expert-floor-level-manual', options=[
+                    {'label':'Low (1-3)','value':'Low'},
+                    {'label':'Mid (4-9)','value':'Mid'},
+                    {'label':'High (10+)','value':'High'}
+                ], placeholder='Select Floor Level', className='my-dropdown', style=common_dropdown_style),
 
                 # Remaining Lease
-                html.Label("Remaining Lease (years)", style={
+                html.Label('Remaining Lease (years)', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold','marginBottom':'5px'}),
+                dcc.Input(id='expert-remaining-lease', type='number',
+                          placeholder='Enter remaining lease years', className='no-spinner', style=common_input_style),
+            ]
+        ),
+
+        # ----- PropertyGuru Input Container -----
+        html.Div(
+            id='guru-input-container',
+            style={'display':'none','width':'600px','margin':'0 auto','textAlign':'left'},
+            children=[
+                html.Label('PropertyGuru Link', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold','marginBottom':'5px'}),
+                dcc.Input(id='expert-propertyguru-url', type='text',
+                          placeholder='Enter valid URL', style=common_input_style),
+
+                html.Label('Floor Level', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold','marginBottom':'5px'}),
+                dcc.Dropdown(id='expert-floor-level-guru', options=[
+                    {'label':'Low (1-3)','value':'Low'},
+                    {'label':'Mid (4-9)','value':'Mid'},
+                    {'label':'High (10+)','value':'High'}
+                ], placeholder='Select Floor Level', className='my-dropdown', style=common_dropdown_style),
+            ]
+        ),
+
+        # Center the Submit button
+        html.Div(
+            html.Button(
+                'Calculate Price',
+                id='submit-expert-input',
+                n_clicks=0,
+                style={
+                    'padding': '10px 20px',
+                    'fontSize': '16px',
+                    'cursor': 'pointer',
+                    'backgroundColor': '#7F0019',
+                    'color': 'white',
                     'fontFamily': 'Inter, sans-serif',
-                    'fontWeight': 'bold',
-                    'display': 'block',
-                    'marginBottom': '5px'
-                }),
-                dcc.Input(
-                    id='expert-remaining-lease',
-                    type='number',
-                    placeholder='Enter remaining lease years',
-                    className='no-spinner',
-                    style=common_input_style
-                ),
+                    'border': 'none',
+                    'borderRadius': '8px'
+                }
+            ),
+            style={"textAlign": "center", "marginTop": "20px"}
+        ),
 
-                # Separator text
-                html.Div(
-                    "Or simply enter the url of a listing on PropertyGuru, and we'll do the rest!",
-                    style={
-                        'fontFamily': 'Inter, sans-serif',
-                        'fontWeight': 'bold',
-                        'marginBottom': '5px',
-                        'marginTop': '10px'
-                    }
-                ),
-
-                # URL input
-                html.Label("Paste your link here!", style={
-                    'fontFamily': 'Inter, sans-serif',
-                    'fontWeight': 'bold',
-                    'display': 'block',
-                    'marginBottom': '5px'
-                }),
-                dcc.Input(
-                    id='expert-propertyguru-url',
-                    type='text',
-                    placeholder='Enter valid URL',
-                    style=common_input_style
-                ),
-
-                # Submit Button
-                html.Button(
-                    'Submit',
-                    id='submit-expert-input',
-                    n_clicks=0,
-                    style={
-                        'padding': '10px 20px',
-                        'fontSize': '16px',
-                        'cursor': 'pointer',
-                        'backgroundColor': 'black',
-                        'color': 'white',
-                        'border': 'none',
-                        'borderRadius': '8px',
-                        'marginTop': '10px'
-                    }
-                ),
-
-                # Error / Info output
-                html.Div(
-                    id='expert-output-dummy',
-                    style={
-                        'marginTop': '30px',
-                        'fontFamily': 'Inter, sans-serif',
-                        'textAlign': 'center'
-                    }
-                )
-            ],
+        # -- Error / Info Output --
+        html.Div(
+            id='expert-output-dummy',
             style={
-                'width': '600px',
-                'margin': '0 auto',
-                'textAlign': 'left'
+                'marginTop': '30px',
+                'fontFamily': 'Inter, sans-serif',
+                'textAlign': 'center'
             }
         )
     ],
@@ -226,20 +184,42 @@ layout = html.Div(
     }
 )
 
+# -- Callback to Toggle Input Containers --
 @callback(
-    [Output('redirect-location-dummy', 'pathname'),
-     Output('expert-output-dummy', 'children')],
-    Input('submit-expert-input', 'n_clicks'),
-    State('expert-postal-code', 'value'),
-    State('expert-flat-type', 'value'),
-    State('expert-square-area', 'value'),
-    State('expert-floor-level', 'value'),
-    State('expert-remaining-lease', 'value'),
-    State('expert-propertyguru-url', 'value')
+    [Output('manual-input-container','style'),
+     Output('guru-input-container','style')],
+    Input('input-mode','value')
 )
-def capture_expert_input(n_clicks, postal_code, flat_type, square_area, floor_level, remaining_lease, propertyguru_url):
-    if n_clicks > 0:
-        if not any([postal_code, flat_type, floor_level, remaining_lease, propertyguru_url]):
-            return no_update, html.Div("Please fill in at least one field or provide a URL.", style={'color': 'red'})
-        return "/page-4", None
+def toggle_input_containers(mode):
+    manual_style = {'display':'block','width':'600px','margin':'0 auto','textAlign':'left'}
+    guru_style   = {'display':'none', 'width':'600px','margin':'0 auto','textAlign':'left'}
+    if mode=='manual':
+        return manual_style, guru_style
+    else:
+        return guru_style, manual_style
+
+# -- Callback to Validate & Redirect --
+@callback(
+    [Output('redirect-location-dummy','pathname'),
+     Output('expert-output-dummy','children')],
+    Input('submit-expert-input','n_clicks'),
+    State('input-mode','value'),
+    State('expert-postal-code','value'),
+    State('expert-flat-type','value'),
+    State('expert-square-area','value'),
+    State('expert-floor-level-manual','value'),
+    State('expert-remaining-lease','value'),
+    State('expert-propertyguru-url','value'),
+    State('expert-floor-level-guru','value')
+)
+def capture_expert_input(n, mode, postal, flat, area, floor_m, lease, url, floor_g):
+    if n and n>0:
+        if mode=='manual':
+            if not all([postal, flat, area, floor_m, lease]):
+                return no_update, "Please fill in all fields for manual input."
+            return '/page-4', None
+        else:
+            if not all([url, floor_g]):
+                return no_update, "Please provide the PropertyGuru link and Floor Level."
+            return '/page-4', None
     return no_update, None

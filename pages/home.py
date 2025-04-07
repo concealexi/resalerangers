@@ -3,11 +3,10 @@ from dash import html, dcc, register_page
 
 register_page(__name__, path="/")
 
-# Shared card style for the cards section
 card_style = {
     'width': '400px',
-    'height': '400px',
-    'border': '6px solid #944028',
+    'height': '330px',
+    'border': '6px solid #7F0019',
     'borderRadius': '20px',
     'padding': '20px',
     'display': 'flex',
@@ -17,10 +16,9 @@ card_style = {
     'backgroundColor': '#fff'
 }
 
-# Top section with title, subtitle, and horizontal line with circles
 top_section = html.Div([
     html.H1(
-        "'Fair' Price",
+        "HDB Resale Radar",
         style={
             'textAlign': 'center',
             'fontFamily': 'Inter, sans-serif',
@@ -31,11 +29,7 @@ top_section = html.Div([
         }
     ),
     html.P(
-        [
-            "to buy or not to buy",
-            html.Br(),
-            "- someone important probably"
-        ],
+        "Your Guide to Smarter HDB Decisions",
         style={
             'textAlign': 'center',
             'fontFamily': 'Inter, sans-serif',
@@ -48,7 +42,7 @@ top_section = html.Div([
         style={
             'width': '80%',
             'margin': '0 auto 20px auto',
-            'borderBottom': '3px solid #944028',
+            'borderBottom': '3px solid #7F0019',
             'position': 'relative'
         },
         children=[
@@ -57,7 +51,7 @@ top_section = html.Div([
                 style={
                     'width': '15px',
                     'height': '15px',
-                    'backgroundColor': '#944028',
+                    'backgroundColor': '#7F0019',
                     'borderRadius': '50%',
                     'position': 'absolute',
                     'left': '-7.5px',
@@ -69,7 +63,7 @@ top_section = html.Div([
                 style={
                     'width': '15px',
                     'height': '15px',
-                    'backgroundColor': '#944028',
+                    'backgroundColor': '#7F0019',
                     'borderRadius': '50%',
                     'position': 'absolute',
                     'right': '-7.5px',
@@ -81,41 +75,41 @@ top_section = html.Div([
 ])
 
 layout = html.Div([
-    # Top section moved from app.py
+    # Top section
     top_section,
 
-    # Prompt text
+    # Prompt text split into two elements
     html.Div(
-        [
-            "Firstly, what kind of user are you?",
-            html.Br(),
-            "This lets us better address your needs"
-        ],
         style={
             'textAlign': 'center',
             'fontFamily': 'Inter, sans-serif',
             'fontWeight': 'bold',
             'color': 'black',
-            'marginBottom': '40px',
-            'fontSize': '1.1rem'
-        }
+            'marginBottom': '40px'
+        },
+        children=[
+            html.Div(
+                "What brings you here today?",
+                style={'fontSize': '1.8rem'}  # increased size for the first text
+            ),
+            html.Div(
+                "This lets us better address your needs",
+                style={'fontSize': '1.1rem'}  # keep as is
+            )
+        ]
     ),
 
-    # Cards container with links
+    # Cards container
     html.Div(
         children=[
             # Left Card
             dcc.Link(
                 html.Div([
-                    # Icon container at the top
+                    # Icon container
                     html.Div(
                         html.Img(
-                            src='https://img.icons8.com/ios-filled/100/marker.png',
-                            style={
-                                'width': '90px',
-                                'marginBottom': '10px',
-                                'filter': 'invert(45%) sepia(100%) saturate(250%) hue-rotate(340deg) brightness(70%) contrast(115%)'
-                            }
+                            src='assets/location_marker.svg',
+                            style={'width': '90px', 'marginBottom': '10px'}
                         ),
                         style={
                             'width': '100%',
@@ -124,30 +118,25 @@ layout = html.Div([
                             'marginTop': '20px'
                         }
                     ),
-                    # Spacer to push text down
-                    html.Div(style={'flexGrow': 1}),
-                    # Text container
+                    html.Div(style={'flexGrow': 1}),  # Spacer
                     html.Div([
-                        html.H2([
-                            "I want to check a",
-                            html.Br(),
-                            "specific location"
-                        ], style={
-                            'fontFamily': 'Inter, sans-serif', 
-                            'color': '#333',
-                            'height': '110px',
-                            'marginBottom': '-12.5px'
-                        }),
+                        html.H2("I have Specific Ideas",
+                                style={
+                                    'fontFamily': 'Inter, sans-serif',
+                                    'color': 'black',
+                                    'height': '110px',
+                                    'marginBottom': '-50px'
+                                }),
                         html.P(
                             [
-                                "We can predict a price range of a",
+                                "Get a tailored price prediction for",
                                 html.Br(),
-                                "flat based on its key characteristics"
+                                "your ideal flat."
                             ],
                             style={
-                                'fontFamily': 'Inter, sans-serif', 
-                                'color': '#555',
-                                'height': '62.5px'
+                                'fontFamily': 'Inter, sans-serif',
+                                'color': 'black',
+                                'height': '100px'
                             }
                         )
                     ], style={'marginBottom': '20px'})
@@ -159,15 +148,11 @@ layout = html.Div([
             # Right Card
             dcc.Link(
                 html.Div([
-                    # Icon container at the top
+                    # Icon container
                     html.Div(
                         html.Img(
-                            src='https://img.icons8.com/ios-filled/100/map.png',
-                            style={
-                                'width': '90px',
-                                'marginBottom': '10px',
-                                'filter': 'invert(45%) sepia(100%) saturate(250%) hue-rotate(340deg) brightness(70%) contrast(115%)'
-                            }
+                            src='assets/map.svg',
+                            style={'width': '90px', 'marginBottom': '10px'}
                         ),
                         style={
                             'width': '100%',
@@ -176,32 +161,25 @@ layout = html.Div([
                             'marginTop': '20px'
                         }
                     ),
-                    # Spacer to push text down
-                    html.Div(style={'flexGrow': 1}),
-                    # Text container
+                    html.Div(style={'flexGrow': 1}),  # Spacer
                     html.Div([
-                        html.H2([
-                            "I want to look",
-                            html.Br(),
-                            "at general areas"
-                        ], style={
-                            'fontFamily': 'Inter, sans-serif', 
-                            'color': '#333',
-                            'height': '110px',
-                            'marginBottom': '-25px'
-                        }),
+                        html.H2("I am Exploring Options",
+                                style={
+                                    'fontFamily': 'Inter, sans-serif',
+                                    'color': 'black',
+                                    'height': '110px',
+                                    'marginBottom': '-50px'
+                                }),
                         html.P(
                             [
-                                "We can provide past transactional",
+                                "Explore market insights, price",
                                 html.Br(),
-                                "data based on the town of choice",
-                                html.Br(),
-                                "and some characteristics"
+                                "ranges and town comparisons."
                             ],
                             style={
-                                'fontFamily': 'Inter, sans-serif', 
-                                'color': '#555',
-                                'height': '75px'
+                                'fontFamily': 'Inter, sans-serif',
+                                'color': 'black',
+                                'height': '100px'
                             }
                         )
                     ], style={'marginBottom': '20px'})
@@ -219,14 +197,87 @@ layout = html.Div([
         }
     ),
 
-    # Footer or small text section
+    # Row containing "We provide" (left) and ticks
     html.Div(
-        "This is a property of Resale Rangers",
+        style={
+            'display': 'flex',
+            'justifyContent': 'space-between',
+            'alignItems': 'flex-start',
+            'width': '80%',
+            'margin': '40px auto 0 auto'
+        },
+        children=[
+            # Left column: "We provide" header and ticks list
+            html.Div(
+                children=[
+                    html.H3("We provide:",
+                            style={
+                                'fontFamily': 'Inter, sans-serif',
+                                'color': 'black',
+                                'textAlign': 'left',
+                                'marginBottom': '20px'
+                            }),
+                    # Ticks list with indent, italic, and enlarged text
+                    html.Div([
+                        html.Div([
+                            html.Img(src='assets/tick.svg',
+                                     style={'width': '24px', 'marginRight': '10px'}),
+                            html.Span(
+                                "Instant Price Predictions",
+                                style={
+                                    'fontFamily': 'Inter, sans-serif',
+                                    'color': 'black',
+                                    'fontSize': '1.5rem',
+                                    'fontWeight': 'bold',
+                                    'fontStyle': 'italic'
+                                }
+                            )
+                        ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '8px', 'marginLeft': '20px'}),
+
+                        html.Div([
+                            html.Img(src='assets/tick.svg',
+                                     style={'width': '24px', 'marginRight': '10px'}),
+                            html.Span(
+                                "Past Transaction Insights (2015-2024)",
+                                style={
+                                    'fontFamily': 'Inter, sans-serif',
+                                    'color': 'black',
+                                    'fontSize': '1.5rem',
+                                    'fontWeight': 'bold',
+                                    'fontStyle': 'italic'
+                                }
+                            )
+                        ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '8px', 'marginLeft': '20px'}),
+
+                        html.Div([
+                            html.Img(src='assets/tick.svg',
+                                     style={'width': '24px', 'marginRight': '10px'}),
+                            html.Span(
+                                "Town-by-Town Market Trends",
+                                style={
+                                    'fontFamily': 'Inter, sans-serif',
+                                    'color': 'black',
+                                    'fontSize': '1.5rem',
+                                    'fontWeight': 'bold',
+                                    'fontStyle': 'italic'
+                                }
+                            )
+                        ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '8px', 'marginLeft': '20px'})
+                    ], style={'textAlign': 'left'})
+                ],
+                style={'width': '60%'}
+            )
+        ]
+    ),
+
+    # Footer section with reduced gap at the bottom
+    html.Div(
+        "Resale Rangers aim at safeguarding you with transparency in Singapore's resale market through data-driven insights.",
         style={
             'textAlign': 'center',
             'fontFamily': 'Inter, sans-serif',
-            'color': '#888',
-            'marginTop': '150px',
+            'color': 'black',
+            'marginTop': '30px',
             'fontSize': '0.9rem'
         }
     )
