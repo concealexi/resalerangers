@@ -111,7 +111,7 @@ layout = html.Div(
                         html.Label('Square Area (sqm)', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
                         html.Div('0–250', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'})
                     ], style={'display':'flex','justifyContent':'space-between','marginBottom':'10px'}),
-                    dcc.Slider(id='expert-square-area', min=0, max=250, value=250, step=1,
+                    dcc.Slider(id='expert-square-area', min=0, max=250, value=0, step=1,
                                tooltip={'placement':'bottom'}, className='my-slider')
                 ], style={'marginBottom':'30px'}),
 
