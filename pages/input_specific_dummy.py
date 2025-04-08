@@ -1,7 +1,12 @@
 from dash import html, dcc, register_page, callback, Output, Input, State, no_update
 from functions.input_for_model import get_information
+import pandas as pd
 
 register_page(__name__, path="/input-specific-dummy")
+
+hdb_info = pd.read_csv("dataset/hdb_informations.csv")
+
+
 
 # Define common styles for inputs
 common_input_style = {
@@ -235,3 +240,31 @@ def capture_expert_input(n, mode, postal, flat, area, floor_m, lease, url, floor
             }
             return '/page-4', None, {}, guru_data
     return no_update, None, no_update, no_update
+
+@callback(
+    Output('expert-flat-type', 'options'),
+    Input('expert-postal-code', 'value')
+)
+def update_flat_type_options(postal_code):
+    if not postal_code:
+        return []
+
+    # Ensure postal code is string for matching
+    filtered = hdb_info[hdb_info['postal_code'].astype(str) == str(postal_code)]
+
+    if filtered.empty:
+        return []
+
+    flat_type_cols = [
+        'flat_type_1 ROOM', 'flat_type_2 ROOM', 'flat_type_3 ROOM',
+        'flat_type_4 ROOM', 'flat_type_5 ROOM',
+        'flat_type_EXECUTIVE', 'flat_type_MULTI-GENERATION'
+    ]
+
+    type_counts = filtered[flat_type_cols].sum()
+
+    return [
+        {'label': col.replace('flat_type_', '').replace('_', ' ').title(), 'value': col.replace('flat_type_', '')}
+        for col, val in type_counts.items() if val > 0
+    ]
+
