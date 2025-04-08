@@ -1,4 +1,5 @@
 from dash import html, dcc, register_page, callback, Output, Input, State, no_update
+from functions.input_for_model import get_information
 
 register_page(__name__, path="/input-specific-dummy")
 
@@ -108,20 +109,17 @@ layout = html.Div(
                 html.Div([
                     html.Div([
                         html.Label('Square Area (sqm)', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
-                        html.Div('0–500', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'})
+                        html.Div('0–250', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'})
                     ], style={'display':'flex','justifyContent':'space-between','marginBottom':'10px'}),
-                    dcc.Slider(id='expert-square-area', min=0, max=500, value=250, step=1,
+                    dcc.Slider(id='expert-square-area', min=0, max=250, value=250, step=1,
                                tooltip={'placement':'bottom'}, className='my-slider')
                 ], style={'marginBottom':'30px'}),
 
                 # Floor Level (Manual)
                 html.Label('Floor Level', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold','marginBottom':'5px'}),
-                dcc.Dropdown(id='expert-floor-level-manual', options=[
-                    {'label':'Low (1-3)','value':'Low'},
-                    {'label':'Mid (4-9)','value':'Mid'},
-                    {'label':'High (10+)','value':'High'}
-                ], placeholder='Select Floor Level', className='my-dropdown', style=common_dropdown_style),
-
+                dcc.Input(id='expert-floor-level-manual', type='number',
+                          placeholder='Enter floor level', className='no-spinner', style=common_input_style),
+                
                 # Remaining Lease
                 html.Label('Remaining Lease (years)', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold','marginBottom':'5px'}),
                 dcc.Input(id='expert-remaining-lease', type='number',
@@ -201,7 +199,9 @@ def toggle_input_containers(mode):
 # -- Callback to Validate & Redirect --
 @callback(
     [Output('redirect-location-dummy','pathname'),
-     Output('expert-output-dummy','children')],
+     Output('expert-output-dummy','children'),
+     Output('manual-store', 'data'),
+     Output('guru-store', 'data')],
     Input('submit-expert-input','n_clicks'),
     State('input-mode','value'),
     State('expert-postal-code','value'),
@@ -213,13 +213,25 @@ def toggle_input_containers(mode):
     State('expert-floor-level-guru','value')
 )
 def capture_expert_input(n, mode, postal, flat, area, floor_m, lease, url, floor_g):
-    if n and n>0:
-        if mode=='manual':
+    if n and n > 0:
+        if mode == 'manual':
+            # Validate manual fields are provided
             if not all([postal, flat, area, floor_m, lease]):
-                return no_update, "Please fill in all fields for manual input."
-            return '/page-4', None
+                return no_update, "Please fill in all fields for manual input.", no_update, no_update
+            try:
+                # Format the inputs into the model-ready format using your function.
+                # Note: Ensure postal_code is the same type your function expects.
+                formatted_input = get_information(postal, flat, area, floor_m, lease)
+            except Exception as e:
+                return no_update, f"Error formatting inputs: {e}", no_update, no_update
+            # Store the formatted manual input.
+            return '/page-4', None, formatted_input, {}
         else:
             if not all([url, floor_g]):
-                return no_update, "Please provide the PropertyGuru link and Floor Level."
-            return '/page-4', None
-    return no_update, None
+                return no_update, "Please provide the PropertyGuru link and Floor Level.", no_update, no_update
+            guru_data = {
+                'url': url,
+                'floor_level': floor_g
+            }
+            return '/page-4', None, {}, guru_data
+    return no_update, None, no_update, no_update

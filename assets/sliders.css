@@ -10,6 +10,7 @@
 
 .my-slider [class*="rc-slider-dot-active"] {
     border-color: #7f0019 !important;
+    background-color: none !important; 
 }
 
 /* Make the handle (knob) black */
@@ -24,7 +25,15 @@
 
 .my-slider [class*="rc-slider-mark"] {
     display: none !important;
-  }
+}
+
+.my-slider [class*="rc-slider-dot"] {
+    background-color: transparent !important
+}
+
+.my-slider [class*="rc-slider-step"] {
+    background-color: none !important; 
+}
 
 .my-slider {
     padding-left: 5px !important;
