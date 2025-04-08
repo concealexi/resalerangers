@@ -16,6 +16,8 @@ app = Dash(
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
+    dcc.Store(id='manual-store', storage_type='session'),
+    dcc.Store(id='guru-store', storage_type='session'),
     page_container,
 ], style={
     'backgroundColor': 'white'
