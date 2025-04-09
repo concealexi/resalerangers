@@ -41,54 +41,114 @@ layout = html.Div(
             "textAlign": "left",
             "paddingLeft": "20px"
         }),
+
         # Price Trends Section
         html.Div([
             html.H4("Price trends for this property", style={"fontFamily": "Inter, sans-serif"}),
             html.P(id="price-trend-text", style={"fontFamily": "Inter, sans-serif"}),
 
+            # Segmented Toggle
+            html.Div(
+                dcc.RadioItems(
+                    id='price-trend-toggle',
+                    options=[
+                        {'label': 'Within 1km', 'value': '1km'},
+                        {'label': 'Your block', 'value': 'block'}
+                    ],
+                    value='block',
+                    inline=True,
+                    className='mode-toggle-container',
+                    labelClassName='mode-toggle-label',
+                    inputClassName='mode-toggle-input'
+                ),
+                style={'marginBottom': '10px'}
+            ),
+
+            # Chart and Summary Card Side by Side (Aligned Heights, 6.5:3.5)
             html.Div([
-                html.Button("Within 1km", id="1km-btn", n_clicks=0, style={
-                    "marginRight": "10px",
-                    "border": "none",
-                    "padding": "8px 16px",
-                    "borderRadius": "20px",
-                    "backgroundColor": "#eee",
-                    "fontFamily": "Inter, sans-serif"
+                # Bar Chart (6.5/10 width)
+                html.Div([
+                    html.Div([
+                        dcc.Graph(
+                            id="price-bar-chart",
+                            figure={},
+                            config={'displayModeBar': False},
+                            style={"height": "100%"}
+                        )
+                    ], style={
+                        "border": "1px solid lightgray",
+                        "padding": "20px",
+                        "borderRadius": "10px",
+                        "backgroundColor": "white",
+                        "width": "100%",
+                        "height": "100%"
+                    })
+                ], style={
+                    "flex": "7.5",
+                    "height": "350px",
+                    "display": "flex"
                 }),
-                html.Button("Your block", id="block-btn", n_clicks=0, style={
-                    "backgroundColor": "#800020",
-                    "color": "white",
-                    "border": "none",
-                    "padding": "8px 16px",
-                    "borderRadius": "20px",
-                    "fontFamily": "Inter, sans-serif"
+
+                # Summary Card (3.5/10 width)
+                html.Div([
+                    html.Div([
+                        html.H4("Within the last year", style={
+                            "fontFamily": "Inter, sans-serif",
+                            "fontWeight": "700",
+                            "marginBottom": "20px"
+                        }),
+                        html.P("Average Price", style={
+                            "fontFamily": "Inter, sans-serif",
+                            "fontStyle": "italic",
+                            "marginBottom": "0"
+                        }),
+                        html.H3("$300,000", style={
+                            "fontFamily": "Inter, sans-serif",
+                            "fontWeight": "700",
+                            "marginTop": "5px"
+                        }),
+                        html.P("Highest Sold", style={"fontFamily": "Inter, sans-serif", "marginBottom": "0", "marginTop": "20px"}),
+                        html.Div([
+                            html.H4("$500,000", style={
+                                "display": "inline-block",
+                                "fontFamily": "Inter, sans-serif",
+                                "fontWeight": "700",
+                                "marginRight": "8px"
+                            }),
+                            html.Span("Mar 2024", style={"color": "#888", "fontFamily": "Inter, sans-serif"})
+                        ]),
+                        html.P("Lowest Sold", style={"fontFamily": "Inter, sans-serif", "marginBottom": "0", "marginTop": "20px"}),
+                        html.Div([
+                            html.H4("$100,000", style={
+                                "display": "inline-block",
+                                "fontFamily": "Inter, sans-serif",
+                                "fontWeight": "700",
+                                "marginRight": "8px"
+                            }),
+                            html.Span("Mar 2024", style={"color": "#888", "fontFamily": "Inter, sans-serif"})
+                        ])
+                    ], style={
+                        "border": "1px solid lightgray",
+                        "padding": "20px",
+                        "borderRadius": "10px",
+                        "fontFamily": "Inter, sans-serif",
+                        "backgroundColor": "#fff",
+                        "flex": "1",
+                        "height": "100%"
+                    })
+                ], style={
+                    "flex": "2.5",
+                    "height": "350px",
+                    "display": "flex"
                 })
-            ], style={"marginBottom": "10px"}),
-
-            html.Div([
-                dcc.Graph(id="price-bar-chart", figure={}, config={'displayModeBar': False})
-            ], style={"flex": "1"})
-        ], style={"margin": "0 auto", "maxWidth": "1000px", "padding": "20px"}),
-
-        # Summary Card and Chart Side by Side
-        html.Div([
-            html.Div([
-                html.H4("Within the last year", style={"fontFamily": "Inter, sans-serif"}),
-                html.P("Average Price", style={"fontWeight": "bold", "fontFamily": "Inter, sans-serif"}),
-                html.H3("$300,000", style={"fontFamily": "Inter, sans-serif"}),
-                html.P("Highest Sold", style={"fontFamily": "Inter, sans-serif"}),
-                html.H4("$500,000  Mar 2024", style={"fontFamily": "Inter, sans-serif"}),
-                html.P("Lowest Sold", style={"fontFamily": "Inter, sans-serif"}),
-                html.H4("$100,000  Mar 2024", style={"fontFamily": "Inter, sans-serif"})
             ], style={
-                "border": "1px solid lightgray",
-                "padding": "20px",
-                "borderRadius": "10px",
-                "width": "300px",
-                "fontFamily": "Inter, sans-serif",
+                "display": "flex",
+                "maxWidth": "1000px",
+                "margin": "0 auto",
+                "gap": "20px",
                 "marginTop": "20px"
             })
-        ], style={"margin": "0 auto", "maxWidth": "1000px"}),
+        ], style={"margin": "0 auto", "maxWidth": "1000px", "padding": "20px"}),
 
         # Recent Transactions
         html.Div([
@@ -122,7 +182,7 @@ layout = html.Div(
     style={"backgroundColor": "white", "padding": "20px"}
 )
 
-# Main callback — auto trigger on page load based on `manual-store`
+# Prediction text on page load
 @callback(
     Output("prediction-title", "children"),
     Output("price-section", "children"),
@@ -131,7 +191,6 @@ layout = html.Div(
     Input("manual-store", "data"),
     Input("guru-store", "data")
 )
-
 def display_prediction(manual_data, guru_data):
     data = manual_data if manual_data else guru_data
 
@@ -159,3 +218,34 @@ def display_prediction(manual_data, guru_data):
             return "Error occurred", html.Div(f"Prediction failed: {e}"), "", ""
 
     return "", "", "", ""
+
+# Toggle callback for bar chart
+@callback(
+    Output("price-bar-chart", "figure"),
+    Input("price-trend-toggle", "value")
+)
+def update_chart_based_on_toggle(toggle_value):
+    y_values = [100, 200, 300] if toggle_value == "1km" else [150, 250, 350]
+    label = "1km" if toggle_value == "1km" else "Your Block"
+
+    return {
+        "data": [{
+            "x": [1, 2, 3],
+            "y": y_values,
+            "type": "bar",
+            "name": label,
+            "marker": {"color": "#800020"}
+        }],
+        "layout": {
+            "title": None,
+            "autosize": True,
+            "height": 350,
+            "margin": {
+                "l": 40, "r": 10, "t": 10, "b": 40
+            },
+            "xaxis": {"title": None},
+            "yaxis": {"title": None},
+            "paper_bgcolor": "white",
+            "plot_bgcolor": "white"
+        }
+    }
