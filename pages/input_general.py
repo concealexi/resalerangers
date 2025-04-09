@@ -1,3 +1,4 @@
+import dash
 from dash import html, dcc, register_page, callback, Output, Input, State
 import pandas as pd
 import dash_leaflet as dl
@@ -14,7 +15,8 @@ town_postal_map = hdb_df.groupby('town')['postal_code'].apply(list).to_dict()
 register_page(__name__, path="/input-general")
 
 layout = html.Div([
-    dcc.Store(id='user-filter-store'),
+    dcc.Location(id='url', refresh=True),
+
 
     html.H2("What property are you looking for?", style={
         'fontFamily': 'Helvetica', 'textAlign': 'center', 'marginBottom': '10px'
@@ -183,31 +185,41 @@ def update_floor_categories(town, flat_type):
     ]
 
 @callback(
-    Output('newbie-output', 'children'),
-    Output('newbie-marker', 'position'),
-    Output('newbie-popup', 'children'),
+    Output('user-filter-store', 'data'),
+    Output('url', 'pathname'),
     Input('newbie-submit', 'n_clicks'),
     State('newbie-town-dropdown', 'value'),
     State('newbie-flat-type', 'value'),
     State('newbie-floor-level', 'value'),
+    State('newbie-lease', 'value'),
+    State('newbie-dist-mrt', 'value'),
+    State('newbie-dist-school', 'value'),
     prevent_initial_call=True
 )
-def display_result(n_clicks, town, flat_type, floor_level):
+def save_inputs_and_go(n_clicks, town, flat_type, floor_level, lease, dist_mrt, dist_school):
+    print("🧪 Debug Info:")
+    print("Town:", town)
+    print("Flat Type:", flat_type)
+    print("Floor Level:", floor_level)
+    print("Remaining Lease:", lease)
+    print("Max Distance to MRT:", dist_mrt)
+    print("Max Distance to School:", dist_school)
+
     if not town or not flat_type or not floor_level:
-        return html.Div("Please complete all required fields."), [1.3521, 103.8198], "No location selected."
+        return dash.no_update, dash.no_update
 
-    flat_col = f"flat_type_{flat_type.upper()}"
-    filtered = hdb_df[
-        (hdb_df['town'] == town) &
-        (hdb_df[flat_col] == 1)
-    ]
+    filter_data = {
+        'town': town,
+        'flat_type': flat_type,
+        'floor_level': floor_level
+    }
 
-    if not filtered.empty:
-        match = filtered.iloc[0]
-        lat, lon = match['latitude'], match['longitude']
-        block = str(match['block']).strip()
-        street = match['street_name'].strip().title()
-        popup = f"{block} {street}, {town.title()}"
-        return html.Div(f"You selected: {popup} on {floor_level} floor."), [lat, lon], popup
+    if lease is not None:
+        filter_data['remaining_lease'] = lease
+    if dist_mrt is not None:
+        filter_data['max_dist_mrt'] = dist_mrt
+    if dist_school is not None:
+        filter_data['max_dist_school'] = dist_school
 
-    return html.Div("No matching HDBs found."), [1.3521, 103.8198], "No match found"
+    print("✅ Final filter_data:", filter_data)
+    return filter_data, "/output-general"
