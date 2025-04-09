@@ -1,7 +1,14 @@
 from dash import html, dcc, register_page, callback, Output, Input, State, no_update
 from functions.input_for_model import get_information
+from functions.final_scraper import scraper_guru
+from functions.percentile_floor import get_floor_est
+import pandas as pd
 
 register_page(__name__, path="/input-specific-dummy")
+
+hdb_info = pd.read_csv("dataset/hdb_informations.csv")
+
+
 
 # Define common styles for inputs
 common_input_style = {
@@ -138,9 +145,11 @@ layout = html.Div(
 
                 html.Label('Floor Level', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold','marginBottom':'5px'}),
                 dcc.Dropdown(id='expert-floor-level-guru', options=[
-                    {'label':'Low (1-3)','value':'Low'},
-                    {'label':'Mid (4-9)','value':'Mid'},
-                    {'label':'High (10+)','value':'High'}
+                    {'label':'Ground floor','value':'Ground'},
+                    {'label':'Low','value':'Low'},
+                    {'label':'Mid','value':'Mid'},
+                    {'label':'High','value':'High'},
+                    {'label': 'Penthouse','value':'Penthouse'}
                 ], placeholder='Select Floor Level', className='my-dropdown', style=common_dropdown_style),
             ]
         ),
@@ -215,23 +224,84 @@ def toggle_input_containers(mode):
 def capture_expert_input(n, mode, postal, flat, area, floor_m, lease, url, floor_g):
     if n and n > 0:
         if mode == 'manual':
-            # Validate manual fields are provided
             if not all([postal, flat, area, floor_m, lease]):
                 return no_update, "Please fill in all fields for manual input.", no_update, no_update
             try:
-                # Format the inputs into the model-ready format using your function.
-                # Note: Ensure postal_code is the same type your function expects.
+                # Get model-ready input vector
                 formatted_input = get_information(postal, flat, area, floor_m, lease)
+
+                # Get street_name from hdb_info
+                postal = str(postal)
+                address_row = hdb_info[hdb_info['postal_code'].astype(str) == postal]
+                if address_row.empty:
+                    return no_update, f"No address found for postal code {postal}", no_update, no_update
+
+                street_name = address_row.iloc[0]['address']
+                full_address = f"{street_name}, Singapore {postal}"
+
+                manual_data = {
+                    "input_vector": formatted_input,
+                    "flat_type_input": flat.replace('_', ' ').title(),
+                    "address": full_address
+                }
+
+                return '/page-4', None, manual_data, {}
+
             except Exception as e:
                 return no_update, f"Error formatting inputs: {e}", no_update, no_update
-            # Store the formatted manual input.
-            return '/page-4', None, formatted_input, {}
+
         else:
             if not all([url, floor_g]):
                 return no_update, "Please provide the PropertyGuru link and Floor Level.", no_update, no_update
+            guru_scrape = scraper_guru(url)
+            postal_code = guru_scrape['postal_code']
+            flat_type = guru_scrape['flat_type_label']
+            sqm = int(guru_scrape['floor_area_sqm'])
+            try:
+                remaining_lease = int(guru_scrape['remaining_lease_year'])
+            except (ValueError, TypeError, KeyError):
+                lease_start = hdb_info[hdb_info['postal_code'].astype(str) == str(postal_code)]['year_completed']
+                if lease_start.empty:
+                    raise ValueError(f"Could not find lease start year for postal code {postal_code}")
+                lease_start_year = int(lease_start.iloc[0])
+                remaining_lease = 99 - (2025 - lease_start_year)
+            max_floor = hdb_info[hdb_info['postal_code'].astype(str) == postal_code]['max_floor_lvl'].iloc[0]
+            floor_est = get_floor_est(max_floor, floor_g)
+            formatted_input = get_information(int(postal_code), flat_type, sqm, floor_est, remaining_lease)
+            address = str(guru_scrape['address'])
+            full_address = f"{address}, Singapore {postal_code}"
             guru_data = {
-                'url': url,
-                'floor_level': floor_g
+                "input_vector": formatted_input,
+                "flat_type_input": flat_type.replace('_', ' ').title(),
+                "address": full_address
             }
             return '/page-4', None, {}, guru_data
     return no_update, None, no_update, no_update
+
+@callback(
+    Output('expert-flat-type', 'options'),
+    Input('expert-postal-code', 'value')
+)
+def update_flat_type_options(postal_code):
+    if not postal_code:
+        return []
+
+    # Ensure postal code is string for matching
+    filtered = hdb_info[hdb_info['postal_code'].astype(str) == str(postal_code)]
+
+    if filtered.empty:
+        return []
+
+    flat_type_cols = [
+        'flat_type_1 ROOM', 'flat_type_2 ROOM', 'flat_type_3 ROOM',
+        'flat_type_4 ROOM', 'flat_type_5 ROOM',
+        'flat_type_EXECUTIVE', 'flat_type_MULTI-GENERATION'
+    ]
+
+    type_counts = filtered[flat_type_cols].sum()
+
+    return [
+        {'label': col.replace('flat_type_', '').replace('_', ' ').title(), 'value': col.replace('flat_type_', '')}
+        for col, val in type_counts.items() if val > 0
+    ]
+
