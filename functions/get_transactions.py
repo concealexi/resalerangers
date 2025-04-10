@@ -3,8 +3,8 @@ import geopandas as gpd
 from shapely.geometry import Point
 from datetime import datetime, timedelta
 
-hdb_data = pd.read_csv("datasets/hdb_informations.csv")
-trans_data = pd.read_csv("datasets/hdb_final_dataset.csv")
+hdb_data = pd.read_csv("dataset/hdb_informations.csv")
+trans_data = pd.read_csv("dataset/hdb_final_dataset.csv")
 trans_data['date'] = pd.to_datetime(trans_data['month'])
 
 # Flat type mapping (can be extended)
@@ -48,19 +48,18 @@ def get_transactions(postal_code, user_flat):
     trans_1km = trans_data[trans_data['postal_code'].astype(str).isin(hdb_1km['postal_code'].astype(str))]
     df_same_type = df_nearby[df_nearby[flat_key] == 1]
     same_type_1km = trans_1km[trans_1km[flat_key]==1]
-    one_year_ago = datetime(2025, 1, 1) - timedelta(days=2*365)
-    l_4months = datetime(2025, 1, 1) - timedelta(days=120)
-    df_recent = df_same_type[df_same_type['date'] >= one_year_ago]
+    one_year_ago = datetime(2025, 1, 1) - timedelta(days=365)
+    two_year_ago = datetime(2025, 1, 1) - timedelta(days=2*365)
+    df_recent = df_same_type[df_same_type['date'] >= two_year_ago]
 
-    recent_1km = same_type_1km[same_type_1km['date'] >= l_4months]
- 
+    recent_1km_year = same_type_1km[same_type_1km['date'] >= one_year_ago]
 
     df_recent_sorted = df_recent.sort_values(by='date', ascending=False)
     df_deduped = df_recent_sorted.drop_duplicates(subset='address', keep='first')
     df_with_dist = pd.merge(df_deduped, gdf[['address', 'distance']], on='address', how='left')
     top3 = df_with_dist.nsmallest(3, 'distance')
 
-    return top3[['date', 'address', 'adjusted_resale_price']], recent_1km
+    return top3[['month', 'address', 'storey_range', 'adjusted_resale_price']], recent_1km_year
 
 def get_block_transactions(postal_code, user_flat):
     # Validate postal code, if no match, hit error
@@ -77,12 +76,11 @@ def get_block_transactions(postal_code, user_flat):
     # Filter transactions
     block_transaction = trans_data[trans_data['postal_code'].astype(str) == postal_code]
     block_same_type = block_transaction[block_transaction[flat_key] == 1]
-    one_year_ago = datetime(2025, 1, 1) - timedelta(days=2*365)
-    l_4months = datetime(2025, 1, 1) - timedelta(days=120)
+    one_year_ago = datetime(2025, 1, 1) - timedelta(days=365)
+    two_year_ago = datetime(2025, 1, 1) - timedelta(days=2*365)
+    df_recent_2year = block_same_type[block_same_type['date'] >= two_year_ago]
     df_recent_year = block_same_type[block_same_type['date'] >= one_year_ago]
-    df_recent_4m = block_same_type[block_same_type['date'] >= l_4months]
  
-    top3_recent_year = df_recent_year.nlargest(3, 'date')
-    top3_recent_4m = df_recent_4m.nlargest(3, 'date')
+    top3_recent_year = df_recent_2year.nlargest(3, 'date')
 
-    return top3_recent_year[['date', 'address', 'adjusted_resale_price']], top3_recent_4m
+    return top3_recent_year[['month', 'address', 'storey_range', 'adjusted_resale_price']], df_recent_year
