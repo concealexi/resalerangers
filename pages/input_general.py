@@ -12,120 +12,172 @@ hdb_df = pd.merge(hdb_df, hdb_info[['postal_code', 'max_floor_lvl']], on='postal
 towns = sorted(hdb_df['town'].dropna().unique())
 town_postal_map = hdb_df.groupby('town')['postal_code'].apply(list).to_dict()
 
+# Common styling
+
+common_input_style = {
+    'width': '100%',
+    'fontSize': '16px',
+    'marginBottom': '20px',
+    'fontFamily': 'Inter, sans-serif',
+    'padding': '10px',
+    'border': '1px solid #ccc',
+    'borderRadius': '4px',
+    'boxSizing': 'border-box',
+    'backgroundColor': 'white'
+}
+
+common_dropdown_style = {
+    'width': '100%',
+    'fontSize': '16px',
+    'marginBottom': '20px'
+}
+
 register_page(__name__, path="/input-general")
 
-layout = html.Div([
+layout = html.Div(children =[
     dcc.Location(id='url', refresh=True),
+    html.Div(
+            children=[
+                dcc.Link("< back to start", href="/", style={
+                    'fontFamily': 'Inter, sans-serif',
+                    'fontSize': '14px',
+                    'color': 'black',
+                    'textDecoration': 'none'
+                })
+            ],
+            style={'marginLeft': '20px', 'marginTop': '20px'}
+        ),
 
-
-    html.H2("What property are you looking for?", style={
-        'fontFamily': 'Helvetica', 'textAlign': 'center', 'marginBottom': '10px'
-    }),
-    html.H4("Please fill in the characteristics for the flat of your choice", style={
-        'fontFamily': 'Helvetica', 'textAlign': 'center', 'marginBottom': '30px'
-    }),
+    html.H1("What property are you looking for?",
+            style={
+                'textAlign': 'center',
+                'fontFamily': 'Inter, sans-serif',
+                'fontWeight': 'bold',
+                'fontSize': '2rem',
+                'marginTop': '10px',
+                'color': 'black'
+            }
+        ),
+    html.P(
+            "Please fill in the characteristics for the flat of your choice",
+            style={
+                'textAlign': 'center',
+                'fontFamily': 'Inter, sans-serif',
+                'fontSize': '1rem',
+                'marginBottom': '30px',
+                'color': 'black'
+            }
+        ),
 
     html.Div([
 
-        html.Label("Town", style={'fontFamily': 'Helvetica'}),
+        html.Label("Town", style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
         dcc.Dropdown(
             id='newbie-town-dropdown',
             options=[{'label': town.title(), 'value': town} for town in towns],
             placeholder="Enter a town",
-            style={'marginBottom': '5px', 'fontFamily': 'Helvetica'}
+            style=common_dropdown_style
         ),
         html.P("Looking to compare towns? You may select up to 2 to view!", style={
-            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Helvetica',
+            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Inter, sans-serif',
             'marginBottom': '20px'
         }),
 
-        html.Label("Flat Type", style={'fontFamily': 'Helvetica'}),
+        html.Label("Flat Type", style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
         dcc.Dropdown(
             id='newbie-flat-type',
             options=[],
             placeholder='Enter flat type',
-            style={'marginBottom': '25px', 'fontFamily': 'Helvetica'}
+            style=common_dropdown_style
         ),
 
-        html.Label("Floor Level", style={'fontFamily': 'Helvetica'}),
+        html.Label("Floor Level", style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
         dcc.Dropdown(
             id='newbie-floor-level',
-            options=[],
+            options=[
+                {'label': 'Low', 'value': 'Low'},
+                {'label': 'Medium', 'value': 'Medium'},
+                {'label': 'High', 'value': 'High'}
+            ],
             placeholder='Enter floor level',
-            style={'marginBottom': '40px', 'fontFamily': 'Helvetica'}
+            style=common_dropdown_style
         ),
 
         html.H4("You may also add additional filters for your search!", style={
-            'fontFamily': 'Helvetica', 'marginBottom': '30px'
+            'fontFamily': 'Inter, sans-serif', 'marginBottom': '30px'
         }),
-
-        html.Label("Minimum Remaining Lease", style={'fontFamily': 'Helvetica'}),
+        html.Div([
+                html.Label('Minimum Remaining Lease (Year)', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
+                html.Div('0-99', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'})
+                    ], style={'display':'flex','justifyContent':'space-between','marginBottom':'10px'}),
         dcc.Slider(
             id='newbie-lease',
             min=0,
             max=99,
             step=1,
-            tooltip={'always_visible': False, 'placement': 'bottom'},
+            tooltip={'placement':'bottom'}, className='my-slider',
             marks={0: '0', 99: '99 years'},
         ),
-        html.P("Select a minimum remaining lease year", style={
-            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Helvetica',
+        html.P("Select how long the minimum remaining lease you want your unit to be", style={
+            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Inter, sans-serif',
             'marginBottom': '30px'
         }),
-
-        html.Label("Distance to an MRT", style={'fontFamily': 'Helvetica'}),
+        html.Div([
+                html.Label('Distance to nearest MRT (km)', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
+                html.Div('0-2.5', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'})
+                    ], style={'display':'flex','justifyContent':'space-between','marginBottom':'10px'}),
         dcc.Slider(
             id='newbie-dist-mrt',
             min=0,
             max=2.5,
             step=0.1,
-            tooltip={'always_visible': False, 'placement': 'bottom'},
+            tooltip={'placement':'bottom'}, className='my-slider',
             marks={0: '0', 2.5: '2.5km'},
         ),
         html.P("Select a maximum distance from the nearest available MRT", style={
-            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Helvetica',
-            'marginBottom': '30px'
-        }),
-
-        html.Label("Distance to a School", style={'fontFamily': 'Helvetica'}),
-        dcc.Slider(
-            id='newbie-dist-school',
-            min=0,
-            max=2,
-            step=0.1,
-            tooltip={'always_visible': False, 'placement': 'bottom'},
-            marks={0: '0', 2: '2km'},
-        ),
-        html.P("Select a maximum distance from the nearest available school", style={
-            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Helvetica',
+            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Inter, sans-serif',
             'marginBottom': '30px'
         }),
 
         html.Div([
-            html.Button("Submit", id="newbie-submit", n_clicks=0, style={
-                'backgroundColor': '#ff963b',
-                'color': 'white',
-                'padding': '10px 20px',
-                'border': '2px solid #e67e22',
-                'borderRadius': '8px',
-                'fontSize': '16px',
-                'cursor': 'pointer',
-                'fontFamily': 'Helvetica'
-            })
-        ], style={
-            'border': '2px solid #ccc',
-            'padding': '10px',
-            'borderRadius': '12px',
-            'backgroundColor': '#fffaf3',
-            'textAlign': 'center',
-            'width': 'fit-content',
-            'margin': '0 auto',
-            'fontFamily': 'Helvetica'
+                html.Label('Distance to nearest Primary School (km)', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
+                html.Div('0-2.5', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'})
+                    ], style={'display':'flex','justifyContent':'space-between','marginBottom':'10px'}),
+
+        dcc.Slider(
+            id='newbie-dist-school',
+            min=0,
+            max=2.5,
+            step=0.1,
+            tooltip={'placement':'bottom'}, className='my-slider',
+            marks={0: '0', 2.5: '2.5km'},
+        ),
+        html.P("Select a maximum distance from the nearest available school", style={
+            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Inter, sans-serif',
+            'marginBottom': '30px'
         }),
 
-        html.Div(id='newbie-output', style={'marginTop': '30px', 'fontFamily': 'Helvetica'})
-    ], style={'width': '50%', 'margin': '0 auto', 'padding': '40px', 'fontFamily': 'Helvetica'})
-])
+        html.Div([
+            html.Button("See Units Now", id="newbie-submit", n_clicks=0, style={
+                    'padding': '10px 20px',
+                    'fontSize': '16px',
+                    'cursor': 'pointer',
+                    'backgroundColor': '#7F0019',
+                    'color': 'white',
+                    'fontFamily': 'Inter, sans-serif',
+                    'border': 'none',
+                    'borderRadius': '8px'
+                })
+        ], style={"textAlign": "center", "marginTop": "20px"}),
+
+        html.Div(id='newbie-output', style={'marginTop': '30px', 'fontFamily': 'Inter, sans-serif'})
+    ], style={'width': '50%', 'margin': '0 auto', 'padding': '40px', 'fontFamily': 'Inter, sans-serif'})
+],
+    style={
+        'backgroundColor': 'white',
+        'minHeight': '100vh',
+        'padding': '40px'
+    })
 
 # CALLBACKS
 
@@ -151,38 +203,6 @@ def update_flat_type_options(town):
         for col, val in type_counts.items() if val > 0
     ]
 
-@callback(
-    Output('newbie-floor-level', 'options'),
-    Input('newbie-town-dropdown', 'value'),
-    Input('newbie-flat-type', 'value')
-)
-def update_floor_categories(town, flat_type):
-    if not town or not flat_type:
-        return []
-
-    flat_col = f"flat_type_{flat_type.upper()}"
-    filtered = hdb_df[
-        (hdb_df['town'] == town) &
-        (hdb_df[flat_col] == 1)
-    ]
-
-    if filtered.empty:
-        return []
-
-    try:
-        max_floor = int(filtered['max_floor_lvl'].dropna().mode()[0])
-    except:
-        return []
-
-    low = list(range(1, int(round(max_floor * 0.25)) + 1))
-    medium = list(range(int(round(max_floor * 0.25)) + 1, int(round(max_floor * 0.75)) + 1))
-    high = list(range(int(round(max_floor * 0.75)) + 1, max_floor + 1))
-
-    return [
-        {'label': f"Low (Floors {low[0]:02d}–{low[-1]:02d})", 'value': 'Low'},
-        {'label': f"Medium (Floors {medium[0]:02d}–{medium[-1]:02d})", 'value': 'Medium'},
-        {'label': f"High (Floors {high[0]:02d}–{high[-1]:02d})", 'value': 'High'}
-    ]
 
 @callback(
     Output('user-filter-store', 'data'),
