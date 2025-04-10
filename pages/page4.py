@@ -1,9 +1,12 @@
 import dash
-from dash import html, dcc, Input, Output, callback, register_page
+from dash import html, dcc, Input, Output, State, callback, register_page, ctx
+from dash.exceptions import PreventUpdate
+import dash_table
 import joblib
 import pandas as pd
 from models.model_tuning import conformal_predict
-from functions.get_transactions import get_transactions, get_block_transactions  
+from functions.get_transactions import get_transactions, get_block_transactions
+from functions.input_for_model import get_all_nearest_amenities  # assuming it's in functions
 
 register_page(__name__, path="/page-4")
 
@@ -11,120 +14,96 @@ model_package = joblib.load("models/final_model.pkl")
 model = model_package['model']
 q_value = model_package['q_value']
 
-layout = html.Div(
-    children=[
-        html.Div(
-            dcc.Link("< Back to Selection", href="/input-specific-dummy", style={
-                'fontFamily': 'Inter, sans-serif',
-                'fontSize': '14px',
-                'color': 'black',
-                'textDecoration': 'none'
-            }),
-            style={'margin': '20px'}
-        ),
+layout = html.Div([
+    html.Div(dcc.Link("< Back to Selection", href="/input-specific-dummy", style={
+        'fontFamily': 'Inter, sans-serif', 'fontSize': '14px',
+        'color': 'black', 'textDecoration': 'none'}), style={'margin': '20px'}),
 
+    html.Div([
+        html.Div(id="prediction-title", style={"fontSize": "20px", "fontWeight": "bold",
+                                               "fontFamily": "Inter, sans-serif", "marginBottom": "10px"}),
+        html.Div(id="price-section", style={"marginBottom": "30px", "fontFamily": "Inter, sans-serif"})
+    ], style={"maxWidth": "1000px", "margin": "0 auto", "textAlign": "left", "paddingLeft": "20px"}),
+
+    # Price Trends Section
+    html.Div([
+        html.H4("Price trends for this property", style={"fontFamily": "Inter, sans-serif"}),
+        html.P(id="price-trend-text", style={"fontFamily": "Inter, sans-serif"}),
+        dcc.RadioItems(id='price-trend-toggle',
+            options=[{'label': 'Within 1km', 'value': '1km'}, {'label': 'Your block', 'value': 'block'}],
+            value='1km', inline=True, className='mode-toggle-container',
+            labelClassName='mode-toggle-label', inputClassName='mode-toggle-input'),
         html.Div([
-            html.Div(id="prediction-title", style={
-                "fontSize": "20px",
-                "fontWeight": "bold",
-                "fontFamily": "Inter, sans-serif",
-                "marginBottom": "10px"
-            }),
-            html.Div(id="price-section", style={
-                "marginBottom": "30px",
-                "fontFamily": "Inter, sans-serif"
-            })
-        ], style={
-            "maxWidth": "1000px",
-            "margin": "0 auto",
-            "textAlign": "left",
-            "paddingLeft": "20px"
-        }),
-
-        html.Div([
-            html.H4("Price trends for this property", style={"fontFamily": "Inter, sans-serif"}),
-            html.P(id="price-trend-text", style={"fontFamily": "Inter, sans-serif"}),
-            html.Div(
-                dcc.RadioItems(
-                    id='price-trend-toggle',
-                    options=[
-                        {'label': 'Within 1km', 'value': '1km'},
-                        {'label': 'Your block', 'value': 'block'}
-                    ],
-                    value='1km',
-                    inline=True,
-                    className='mode-toggle-container',
-                    labelClassName='mode-toggle-label',
-                    inputClassName='mode-toggle-input'
-                ),
-                style={'marginBottom': '10px'}
-            ),
-
             html.Div([
                 html.Div([
-                    html.Div([
-                        dcc.Graph(
-                            id="price-bar-chart",
-                            figure={},
-                            config={'displayModeBar': False},
-                            style={"height": "100%"}
-                        )
-                    ], style={
-                            "border": "1px solid lightgray",
-                            "padding": "20px 20px 30px 20px",  # top right bottom left
-                            "borderRadius": "10px",
-                            "backgroundColor": "white",
-                            "width": "100%",
-                            "height": "100%"
-                        })
-                ], style={"flex": "7.5", "height": "375px", "display": "flex"}),
+                    dcc.Graph(id="price-bar-chart", config={'displayModeBar': False}, style={"height": "100%"})
+                ], style={"border": "1px solid lightgray", "padding": "20px 20px 30px 20px",
+                          "borderRadius": "10px", "backgroundColor": "white", "width": "100%", "height": "100%"})
+            ], style={"flex": "7.5", "height": "375px", "display": "flex"}),
 
-                html.Div([
-                    html.Div(id="summary-stats", style={
-                        "border": "1px solid lightgray",
-                        "padding": "20px",
-                        "borderRadius": "10px",
-                        "fontFamily": "Inter, sans-serif",
-                        "backgroundColor": "#fff",
-                        "flex": "1",
-                        "height": "100%"
-                    })
-                ], style={"flex": "2.5", "height": "375px", "display": "flex"})
-            ], style={
-                "display": "flex",
-                "maxWidth": "1000px",
-                "margin": "0 auto",
-                "gap": "20px",
-                "marginTop": "20px"
+            html.Div([
+                html.Div(id="summary-stats", style={"border": "1px solid lightgray", "padding": "20px",
+                                                    "borderRadius": "10px", "fontFamily": "Inter, sans-serif",
+                                                    "backgroundColor": "#fff", "flex": "1", "height": "100%"})
+            ], style={"flex": "2.5", "height": "375px", "display": "flex"})
+        ], style={"display": "flex", "maxWidth": "1000px", "margin": "0 auto",
+                  "gap": "20px", "marginTop": "20px"})
+    ], style={"margin": "0 auto", "maxWidth": "1000px", "padding": "20px"}),
+
+    # Recent Transactions Table
+    html.Div([
+        html.H4("Recent Transactions", style={"fontFamily": "Inter, sans-serif"}),
+        html.Div(id='recent-transactions-label', style={"fontFamily": "Inter, sans-serif"}),
+        dash_table.DataTable(
+            id='transaction-table',
+            columns=[
+                {'name': 'Month', 'id': 'month'},
+                {'name': 'Address', 'id': 'address'},
+                {'name': 'Storey', 'id': 'storey_range'},
+                {'name': 'Price', 'id': 'adjusted_resale_price'}
+            ],
+            style_cell={
+                'fontFamily': 'Inter, sans-serif',
+                'textAlign': 'left',
+                'padding': '16px',
+                'border': 'none',
+                'fontSize': '15px',
+                'backgroundColor': '#f9f9f9',
+            },
+            style_header={
+                'backgroundColor': '#ffffff',
+                'fontWeight': 'bold',
+                'borderBottom': '2px solid #dddddd',
+                'fontSize': '16px',
+            },
+            style_table={
+                'width': '100%',
+                'marginTop': '10px',
+                'borderCollapse': 'separate',
+                'borderSpacing': '0 8px'
+            },
+            cell_selectable=True,
+        )
+    ], style={"maxWidth": "1000px", "margin": "0 auto", "marginTop": "40px"}),
+
+    # Property details (with SVG icons + map beside)
+    html.Div([
+        html.H4("Property details", style={"fontFamily": "Inter, sans-serif"}),
+
+        html.Div([
+            html.Div(id='amenities-list', style={
+                "fontFamily": "Inter, sans-serif", "flex": "1", "paddingRight": "30px"
+            }),
+            html.Img(id='map-img', style={
+                "width": "100%", "maxWidth": "400px", "border": "1px solid #ccc"
             })
-        ], style={"margin": "0 auto", "maxWidth": "1000px", "padding": "20px"}),
+        ], style={
+            "display": "flex", "marginTop": "20px", "alignItems": "flex-start", "gap": "40px"
+        })
 
-        html.Div([
-            html.H4("Recent Transactions", style={"fontFamily": "Inter, sans-serif"}),
-            html.P(id="recent-transactions-label", style={"fontFamily": "Inter, sans-serif"}),
-            html.Table([
-                html.Thead(html.Tr([html.Th("Month"), html.Th("Price"), html.Th("Floor Level")])),
-                html.Tbody([html.Tr([html.Td("—"), html.Td("—"), html.Td("—")])])
-            ], style={"border": "1px solid gray", "width": "100%", "marginTop": "10px"})
-        ], style={"maxWidth": "1000px", "margin": "0 auto", "marginTop": "40px"}),
+    ], style={"maxWidth": "1000px", "margin": "0 auto", "marginTop": "40px", "paddingBottom": "40px"})
+], style={"backgroundColor": "white", "padding": "20px"})
 
-        html.Div([
-            html.H4("Property details", style={"fontFamily": "Inter, sans-serif"}),
-            html.Ul([
-                html.Li("Nearest MRT: [dist_mrt], [dist]"),
-                html.Li("Nearest Primary Schools (within 2km): [school list]"),
-                html.Li("Nearest Hawker Center: [hawker], [dist]"),
-                html.Li("Distance to Central Business District: [dist]"),
-            ], style={"fontFamily": "Inter, sans-serif"}),
-
-            html.Img(
-                src="https://maps.googleapis.com/maps/api/staticmap?center=Ang+Mo+Kio,Singapore&zoom=15&size=600x300",
-                style={"marginTop": "10px", "border": "1px solid #ccc"}
-            )
-        ], style={"maxWidth": "1000px", "margin": "0 auto", "marginTop": "40px", "paddingBottom": "40px"})
-    ],
-    style={"backgroundColor": "white", "padding": "20px"}
-)
 
 @callback(
     Output("prediction-title", "children"),
@@ -148,85 +127,172 @@ def display_prediction(manual_data, guru_data):
             return (
                 f"A {flat_type} at {address} is predicted to be",
                 html.Div([
-                    html.H1(f"${int(y_pred[0]):,}", style={"color": "#800020", "font-size": "48px"}),
+                    html.H1(f"${int(y_pred[0]):,}", style={"color": "#7F0019", "font-size": "48px"}),
                     html.P(f"With a plausible range of ${int(y_lower[0]):,} to ${int(y_upper[0]):,}",
                            style={"font-size": "18px"})
                 ]),
                 f"Based on other {flat_type} sales",
-                f"Based on other {flat_type} at [town] within the last 2 years"
+                f"Based on the closest {flat_type} HDB to your selection within the last 2 years"
             )
         except Exception as e:
             return "Error occurred", html.Div(f"Prediction failed: {e}"), "", ""
 
     return "", "", "", ""
 
+stored_records = {}
 @callback(
     Output("price-bar-chart", "figure"),
     Output("summary-stats", "children"),
+    Output("transaction-table", "data"),
     Input("price-trend-toggle", "value"),
     Input("manual-store", "data"),
     Input("guru-store", "data")
 )
-def update_chart_and_stats(toggle_value, manual_data, guru_data):
+def update_chart(toggle_value, manual_data, guru_data):
     data = manual_data if manual_data else guru_data
     if not data:
-        return {}, "No input"
+        raise PreventUpdate
 
     postal = data.get("postal")
     flat_type = data.get("flat_type")
 
-    try:
-        if toggle_value == "1km":
-            _, recent_year = get_transactions(postal, flat_type)
-        else:
-            _, recent_year = get_block_transactions(postal, flat_type)
+    if toggle_value == "1km":
+        top3, recent_year, full = get_transactions(postal, flat_type)
+    else:
+        top3, recent_year, full = get_block_transactions(postal, flat_type)
 
-        # Chart
-        df_grouped = recent_year.copy()
-        df_grouped['quarter'] = pd.to_datetime(df_grouped['month']).dt.to_period('Q').astype(str)
-        bar_df = df_grouped.groupby('quarter')['adjusted_resale_price'].mean().reset_index()
-        fig = {
-            "data": [{
-                "x": bar_df['quarter'],
-                "y": bar_df['adjusted_resale_price'],
-                "type": "bar",
-                "marker": {"color": "#800020"}
-            }],
-            "layout": {
-                "title": None,
-                "autosize": True,
-                "height": 350,
-                "margin": {"l": 40, "r": 10, "t": 10, "b": 40},
-                "xaxis": {"title": None},
-                "yaxis": {"title": None},
-                "paper_bgcolor": "white",
-                "plot_bgcolor": "white"
-            }
+    stored_records['full'] = full.to_dict('records')  # Used for row click
+    bar_df = recent_year.copy()
+    bar_df['quarter'] = pd.to_datetime(bar_df['month']).dt.to_period('Q').astype(str)
+    chart_data = bar_df.groupby('quarter')['adjusted_resale_price'].mean().reset_index()
+
+    fig = {
+        "data": [{
+            "x": chart_data['quarter'],
+            "y": chart_data['adjusted_resale_price'],
+            "type": "bar",
+            "marker": {"color": "#7F0019"}
+        }],
+        "layout": {
+            "title": None,
+            "autosize": True,
+            "height": 350,
+            "margin": {"l": 40, "r": 10, "t": 10, "b": 40},
+            "xaxis": {"title": None},
+            "yaxis": {"title": None},
+            "paper_bgcolor": "white",
+            "plot_bgcolor": "white"
         }
+    }
 
-        # Stats
-        avg_price = round(recent_year['adjusted_resale_price'].mean())
-        max_row = recent_year.loc[recent_year['adjusted_resale_price'].idxmax()]
-        min_row = recent_year.loc[recent_year['adjusted_resale_price'].idxmin()]
-        max_month = pd.to_datetime(max_row['month']).strftime("%b %Y")
-        min_month = pd.to_datetime(min_row['month']).strftime("%b %Y")
+    max_row = recent_year.loc[recent_year['adjusted_resale_price'].idxmax()]
+    min_row = recent_year.loc[recent_year['adjusted_resale_price'].idxmin()]
+    avg_price = round(recent_year['adjusted_resale_price'].mean())
 
-        stats_html = html.Div([
-            html.H4("Within the last year", style={"fontWeight": "700", "marginBottom": "20px"}),
-            html.P("Average Price", style={"fontStyle": "italic", "marginBottom": "0"}),
-            html.H3(f"${avg_price:,}", style={"fontWeight": "700", "marginTop": "5px"}),
-            html.P("Highest Sold", style={"marginBottom": "0", "marginTop": "20px"}),
+    stats_html = html.Div([
+        html.H4("Within the last year", style={"fontWeight": "700", "marginBottom": "20px"}),
+        html.P("Average Price", style={"fontStyle": "italic", "marginBottom": "0"}),
+        html.H3(f"${avg_price:,}", style={"fontWeight": "700", "marginTop": "5px"}),
+        html.P("Highest Sold", style={"marginBottom": "0", "marginTop": "20px"}),
+        html.Div([html.H4(f"${int(max_row['adjusted_resale_price']):,}",
+                          style={"display": "inline-block", "marginRight": "8px"}),
+                  html.Span(pd.to_datetime(max_row['month']).strftime("%b %Y"), style={"color": "#888"})]),
+        html.P("Lowest Sold", style={"marginBottom": "0", "marginTop": "20px"}),
+        html.Div([html.H4(f"${int(min_row['adjusted_resale_price']):,}",
+                          style={"display": "inline-block", "marginRight": "8px"}),
+                  html.Span(pd.to_datetime(min_row['month']).strftime("%b %Y"), style={"color": "#888"})])
+    ])
+
+    return fig, stats_html, top3.to_dict('records')
+
+@callback(
+    Output("amenities-list", "children"),
+    Output("map-img", "src"),
+    Input("transaction-table", "active_cell")
+)
+def update_amenities_and_map(active_cell):
+    if not active_cell:
+        raise PreventUpdate
+
+    row_idx = active_cell['row']
+    full = stored_records.get('full', [])
+
+    if not full or row_idx >= len(full):
+        raise PreventUpdate
+
+    full_row = full[row_idx]
+    lat = full_row.get('latitude')
+    lon = full_row.get('longitude')
+
+    if lat is None or lon is None or pd.isna(lat) or pd.isna(lon):
+        return [html.Div("No geolocation data available for this transaction.")], ""
+
+    coord_row = {
+        "latitude": float(lat),
+        "longitude": float(lon)
+    }
+
+    nearest = get_all_nearest_amenities(coord_row)
+
+    def make_amenity(icon, title, value):
+        return html.Div([
+            html.Img(src=f"/assets/{icon}", style={
+                "width": "28px", "height": "28px", "marginRight": "12px", "flexShrink": "0", "marginTop": "2px"
+            }),
             html.Div([
-                html.H4(f"${int(max_row['adjusted_resale_price']):,}", style={"display": "inline-block", "marginRight": "8px"}),
-                html.Span(max_month, style={"color": "#888"})
-            ]),
-            html.P("Lowest Sold", style={"marginBottom": "0", "marginTop": "20px"}),
-            html.Div([
-                html.H4(f"${int(min_row['adjusted_resale_price']):,}", style={"display": "inline-block", "marginRight": "8px"}),
-                html.Span(min_month, style={"color": "#888"})
+                html.Div(title, style={
+                    "fontWeight": "600", "fontSize": "15px", "marginBottom": "2px"
+                }),
+                html.Div(value, style={
+                    "fontSize": "14px", "color": "#333"
+                })
             ])
-        ])
-        return fig, stats_html
+        ], style={
+            "display": "flex", "alignItems": "flex-start", "marginBottom": "20px"
+        })
 
-    except Exception as e:
-        return {}, html.Div(f"Error loading data: {str(e)}")
+    amenities = [
+        make_amenity("mrt.svg", "Nearest MRT",
+                     f"{nearest['nearest_mrt']['name']}, {nearest['nearest_mrt']['distance_km']} km"),
+        make_amenity("edu.svg", "Nearest Primary Schools (within 2km)",
+                     f"{nearest['nearest_school']['name']}, {nearest['nearest_school']['distance_km']} km"),
+        make_amenity("utensil.svg", "Nearest Hawker Center",
+                     f"{nearest['nearest_foodcourt']['name']}, {nearest['nearest_foodcourt']['distance_km']} km"),
+        make_amenity("city.svg", "Distance to Central Business District",
+                     f"{nearest['distance_to_cbd']} km")
+    ]
+
+    map_url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lon}&zoom=15&size=400x300&markers=color:red%7C{lat},{lon}&key=YOUR_GOOGLE_MAPS_API_KEY"
+
+    return amenities, map_url
+
+
+@callback(
+    Output('transaction-table', 'style_data_conditional'),
+    Input('transaction-table', 'active_cell')
+)
+def style_active_row(active_cell):
+    # Base zebra-striping for all rows
+    style = [
+        {
+            'if': {'row_index': 'odd'},
+            'backgroundColor': '#fcfcfc',
+        },
+        {
+            'if': {'row_index': 'even'},
+            'backgroundColor': '#f9f9f9',
+        }
+    ]
+
+    # Add selected row style
+    if active_cell:
+        row_idx = active_cell['row']
+        style.append({
+            'if': {'row_index': row_idx},
+            'backgroundColor': '#7F0019',
+            'color': 'white',
+            'borderTop': '2px solid #dddddd'
+        })
+
+    return style
+
