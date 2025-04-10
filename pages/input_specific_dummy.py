@@ -242,7 +242,9 @@ def capture_expert_input(n, mode, postal, flat, area, floor_m, lease, url, floor
                 manual_data = {
                     "input_vector": formatted_input,
                     "flat_type_input": flat.replace('_', ' ').title(),
-                    "address": full_address
+                    "address": full_address,
+                    "postal": postal,
+                    "flat_type": flat
                 }
 
                 return '/page-4', None, manual_data, {}
@@ -273,7 +275,9 @@ def capture_expert_input(n, mode, postal, flat, area, floor_m, lease, url, floor
             guru_data = {
                 "input_vector": formatted_input,
                 "flat_type_input": flat_type.replace('_', ' ').title(),
-                "address": full_address
+                "address": full_address,
+                "postal": postal_code,
+                "flat_type": flat_type
             }
             return '/page-4', None, {}, guru_data
     return no_update, None, no_update, no_update
