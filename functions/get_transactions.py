@@ -59,7 +59,7 @@ def get_transactions(postal_code, user_flat):
     df_with_dist = pd.merge(df_deduped, gdf[['address', 'distance']], on='address', how='left')
     top3 = df_with_dist.nsmallest(3, 'distance')
 
-    return top3[['month', 'address', 'storey_range', 'adjusted_resale_price']], recent_1km_year
+    return top3[['month', 'address', 'storey_range', 'adjusted_resale_price']], recent_1km_year, top3
 
 def get_block_transactions(postal_code, user_flat):
     # Validate postal code, if no match, hit error
@@ -83,4 +83,4 @@ def get_block_transactions(postal_code, user_flat):
  
     top3_recent_year = df_recent_2year.nlargest(3, 'date')
 
-    return top3_recent_year[['month', 'address', 'storey_range', 'adjusted_resale_price']], df_recent_year
+    return top3_recent_year[['month', 'address', 'storey_range', 'adjusted_resale_price']], df_recent_year, top3_recent_year
