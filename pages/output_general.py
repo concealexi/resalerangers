@@ -21,7 +21,6 @@ mrt_df = pd.read_csv("dataset/mrt_stations.csv")
 hawker_df = pd.read_csv("dataset/hawkercentercoord.csv")
 
 
-
 # Merge data
 hdb_df['postal_code'] = hdb_df['postal_code'].astype(str).str.zfill(6)
 hdb_info['postal_code'] = hdb_info['postal_code'].astype(str).str.zfill(6)
@@ -29,81 +28,168 @@ hdb_df = pd.merge(hdb_df, hdb_info[['postal_code', 'max_floor_lvl']], on='postal
 hdb_df = hdb_df[hdb_df['max_floor_lvl'].notna()]
 
 
-
-
-
-# Layout
 layout = html.Div([
-    dcc.Location(id='url'),
-    dcc.Store(id='map-center-store', storage_type='memory'),
+    html.Div([  # ⬅️ NEW outer container starts here
 
-    html.H2("Your Selected Filters", style={'fontFamily': 'Inter, sans-serif', 'textAlign': 'left', 'marginLeft': '100px'}),
+        dcc.Location(id='url'),
+        dcc.Store(id='map-center-store', storage_type='memory'),
 
-    html.Div(id='filter-summary', style={'width': '80%', 'margin': 'auto', 'marginBottom': '20px'}),
-
-
-    html.Div(id='bar-chart-section', children=[
-        html.H2("Price trends for properties in the area", style={
-            'textAlign': 'center', 'fontFamily': 'Inter, sans-serif', 'marginTop': '30px'
+        html.H2("Your Selected Filters", style={
+            'fontFamily': 'Inter, sans-serif', 'textAlign': 'left'
         }),
-        html.P(id='bar-chart-subtitle', style={
-            'textAlign': 'center', 'fontFamily': 'Inter, sans-serif', 'fontSize': '16px', 'marginBottom': '30px'
+
+        html.Div(id='filter-summary', style={
+            'width': '80%', 'margin': 'auto', 'marginBottom': '20px'
         }),
-        html.Div(id='bar-chart-subtitle', style={'marginBottom': '10px', 'textAlign': 'center'
-                                                 , 'fontFamily': 'Inter, sans-serif', 'fontSize': '16px'}),
-    ]),
-    html.Div([
+
+        html.Div(id='bar-chart-section', children=[
+            html.H2("Price trends for properties in the area", style={
+                'textAlign': 'left', 'fontFamily': 'Inter, sans-serif', 'marginTop': '30px'
+            }),
+            html.P(id='bar-chart-subtitle', style={
+                'textAlign': 'left', 'fontFamily': 'Inter, sans-serif',
+                'fontSize': '16px', 'marginBottom': '10px'
+            }),
+            html.Div(id='bar-chart-subtitle', style={
+                'marginBottom': '10px', 'textAlign': 'left',
+                'fontFamily': 'Inter, sans-serif', 'fontSize': '16px'
+            }),
+        ]),
+
         html.Div([
-            # Chart
-            html.Div([
-                dcc.Graph(id='quarterly-bar-chart', config={'displayModeBar': False})
-            ], style={'flex': '1', 'maxWidth': '50%', 'marginLeft': '100px'}),
+            html.H4("Select which summary to view:", style={
+                'fontFamily': 'Inter, sans-serif', 'marginBottom': '20px'
+            }),
+            dcc.RadioItems(
+                id='summary-toggle',
+                options=[],  # populated dynamically via callback
+                value='town1',
+                inline=True,
+                className='mode-toggle-container',
+                labelClassName='mode-toggle-label',
+                inputClassName='mode-toggle-input'
+            )
+        ], style={
+            'textAlign': 'left', 'marginTop': '20px',
+            'marginBottom': '20px', 'fontFamily': 'Inter, sans-serif'
+        }),
 
-            # Summary Box
-            html.Div(id='price-summary', style={
-                'flex': '1',
-                'padding': '20px',
-                'backgroundColor': '#f5f5f5',
-                'border': '1px solid #ccc',
-                'borderRadius': '10px',
-                'marginLeft': '20px',
-                'fontFamily': 'Inter, sans-serif'
+        html.Div([
+            html.Div([
+            dcc.Graph(id='quarterly-bar-chart', config={'displayModeBar': False}, style={
+                "height": "100%", "width": "100%"
             })
         ], style={
-            'display': 'flex',
-            'flexWrap': 'nowrap',
-            'justifyContent': 'center',
-            'alignItems': 'flex-start',
-            'gap': '2px',
-            'marginTop': '20px'
+            "flexGrow": 7.5,
+            "border": "1px solid lightgray",
+            "padding": "20px 20px 30px 20px",
+            "borderRadius": "10px",
+            "backgroundColor": "white",
+            "display": "flex",        # <-- add this
+            "alignItems": "stretch"   # <-- and this
+        }),
+        html.Div(id='price-summary-container', style={
+            "flexGrow": 2.5,
+            "border": "1px solid lightgray",
+            "padding": "5px",
+            "borderRadius": "10px",
+            "fontFamily": "Inter, sans-serif",
+            "backgroundColor": "#fff",
+            "display": "flex",        # <-- and this
+            "flexDirection": "column",# <-- and this
+            "justifyContent": "space-between"  # <-- optional
         })
+
+        ], style={
+            "display": "flex",
+            "gap": "20px",
+            "marginTop": "20px",
+            "alignItems": "stretch"
+        }),
+
+        html.Div([
+            html.H3("📄 Recent Transactions Matching Your Filters", style={
+                'textAlign': 'center',
+                'fontFamily': 'Inter, sans-serif',
+                'marginTop': '40px',
+                'marginBottom': '20px',
+                'fontWeight': '600',
+                'fontSize': '24px'
+            })
+        ]),
+
+        html.Div([
+            html.Div([
+                html.H4("🏙️ Town 1", style={'textAlign': 'center'}),
+                html.Div(id='filter-table-town1')
+            ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+            html.Div([
+                html.H4("🏙️ Town 2", style={'textAlign': 'center'}),
+                html.Div(id='filter-table-town2')
+            ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top', 'marginLeft': '4%'})
     ]),
 
-    html.H3("Recent Transactions Matching Your Filters", style={'textAlign': 'center', 'fontFamily': 'Inter, sans-serif', 
-                                                                'marginTop': '20px', 'marginBottom': '20px'}),
-    dcc.Store(id='selected-postal-store'),
-    html.Div(id='filter-table'),
+        dcc.Store(id='selected-postal-store'),
+        dcc.Store(id='selected-postal-store-town2'),
 
-    html.Hr(),
-    html.Div(id='property-details', style={'marginTop': '30px', 'width': '80%', 'margin': 'auto'}),
-    html.Div([
-        html.H3("Map of Nearby Amenities", style={
-            'textAlign': 'center',
-            'marginTop': '40px',
-            'fontFamily': 'Inter, sans-serif'
-        }),
+        html.Hr(),
+
         html.Div([
-            dl.Map(id='amenity-map',
-                center=[1.3521, 103.8198],
-                zoom=12,
-                children=[
-                    dl.TileLayer(),
-                    dl.LayerGroup(id='map-markers')
-                ],
-                style={'width': '100%', 'height': '400px'} 
-                )], style={'width': '50%', 'margin': '0 auto'})  # <-- Shrink this to 50%
-    ], style={'marginTop': '30px'})
+            html.Div(id='property-details', style={'flex': '1', 'marginRight': '10px'}),
+            html.Div(id='property-details-town2', style={'flex': '1', 'marginLeft': '10px'})
+        ], style={
+            'display': 'flex',
+            'flexDirection': 'row',
+            'justifyContent': 'center',
+            'alignItems': 'flex-start',
+            'width': '100%',
+            'gap': '20px',
+            'marginTop': '30px'
+        }),
+
+        html.Div([
+            html.H3("🗺️ Map of Nearby Amenities", style={
+                'textAlign': 'center',
+                'marginTop': '40px',
+                'fontFamily': 'Inter, sans-serif'
+            }),
+            html.Div([
+                html.Div([
+                    dl.Map(id='amenity-map',
+                           center=[1.287953, 103.851784],
+                           zoom=15,
+                           children=[
+                               dl.TileLayer(url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                                            attribution='&copy; <a href="https://carto.com/">CartoDB</a>'),
+                               dl.LayerGroup(id='map-markers')
+                           ],
+                           style={'width': '100%', 'height': '400px'})
+                ], style={'flex': '1', 'marginRight': '10px'}),
+
+                html.Div([
+                    dl.Map(id='amenity-map-town2',
+                           center=[1.287953, 103.851784],
+                           zoom=15,
+                           children=[
+                               dl.TileLayer(url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                                            attribution='&copy; <a href="https://carto.com/">CartoDB</a>'),
+                               dl.LayerGroup(id='map-markers-town2')
+                           ],
+                           style={'width': '100%', 'height': '400px'})
+                ], style={'flex': '1', 'marginLeft': '10px'})
+            ], style={
+                'display': 'flex', 'gap': '20px',
+                'width': '100%'
+            })
+        ], style={'marginTop': '30px'})
+
+    ], style={  # 👈 NEW OUTER CONTAINER STYLE
+        'maxWidth': '1000px',
+        'margin': '0 auto',
+        'padding': '0 20px'
+    })
 ])
+
 
 
 
@@ -141,22 +227,19 @@ def get_all_nearest_amenities(postal_code, hdb_amenities_dist_with_postal, all_p
 
 @callback(
     Output('quarterly-bar-chart', 'figure'),
-    Output('price-summary', 'children'),
+    Output('price-summary-container', 'children'),
     Output('bar-chart-subtitle', 'children'),
     Output('filter-summary', 'children'),
-    Input('user-filter-store', 'data')
+    Input('user-filter-store', 'data'),
+    Input('summary-toggle', 'value')
 )
-def update_quarterly_chart(filter_data):
-    import pandas as pd
-    import plotly.express as px
-
+def update_quarterly_chart(filter_data, summary_toggle):
     df = hdb_df.copy()
-    
     if not filter_data:
         raise dash.exceptions.PreventUpdate
 
-    # Extract filters
-    town = filter_data.get('town')
+    town = filter_data.get('town1')
+    town2 = filter_data.get('town2')
     flat_type = filter_data.get('flat_type')
     floor_level = filter_data.get('floor_level')
     lease = filter_data.get('remaining_lease')
@@ -164,26 +247,14 @@ def update_quarterly_chart(filter_data):
     max_sch = filter_data.get('max_dist_school')
     flat_type_col = f"flat_type_{flat_type}"
 
-    # Apply filtering
-    df = df[(df['town'] == town) & (df[flat_type_col] == 1)]
-    # Floor level filter logic
-    if floor_level:
-        # Calculate the actual level range from string like '01 TO 03' in storey_median
-        def extract_level_range(median_str):
-            try:
-                start, end = median_str.split(" TO ")
-                return (int(start), int(end))
-            except:
-                return (None, None)
+    df1 = df[(df['town'] == town) & (df[flat_type_col] == 1)].copy()
+    df2 = df[(df['town'] == town2) & (df[flat_type_col] == 1)].copy()
 
-        # Ensure storey_median is numeric
-        df['storey_median'] = pd.to_numeric(df['storey_median'], errors='coerce')
+    for dfx in [df1, df2]:
+        dfx['storey_median'] = pd.to_numeric(dfx['storey_median'], errors='coerce')
+        dfx['low_threshold'] = (dfx['max_floor_lvl'] * 0.25).round()
+        dfx['high_threshold'] = (dfx['max_floor_lvl'] * 0.75).round()
 
-        # Compute thresholds
-        df['low_threshold'] = (df['max_floor_lvl'] * 0.25).round()
-        df['high_threshold'] = (df['max_floor_lvl'] * 0.75).round()
-
-        # Classify floor level
         def classify_floor(row):
             if pd.isna(row['storey_median']) or pd.isna(row['max_floor_lvl']):
                 return None
@@ -194,34 +265,136 @@ def update_quarterly_chart(filter_data):
             else:
                 return "Medium"
 
-        df['floor_category'] = df.apply(classify_floor, axis=1)
+        dfx['floor_category'] = dfx.apply(classify_floor, axis=1)
 
-        # Filter
-        if floor_level:
-            df = df[df['floor_category'] == floor_level]
-
-
-
+    if floor_level:
+        df1 = df1[df1['floor_category'] == floor_level]
+        df2 = df2[df2['floor_category'] == floor_level]
     if lease:
-        df = df[df['remaining_lease'] >= lease]
+        df1 = df1[df1['remaining_lease'] >= lease]
+        df2 = df2[df2['remaining_lease'] >= lease]
     if max_mrt:
-        df = df[df['min_dist_mrt'] <= max_mrt]
+        df1 = df1[df1['min_dist_mrt'] <= max_mrt]
+        df2 = df2[df2['min_dist_mrt'] <= max_mrt]
     if max_sch:
-        df = df[df['min_dist_sch'] <= max_sch]
+        df1 = df1[df1['min_dist_sch'] <= max_sch]
+        df2 = df2[df2['min_dist_sch'] <= max_sch]
 
-    # Time filtering
-    months = [
-        '2024-04', '2024-05', '2024-06', '2024-07', '2024-08', '2024-09',
-        '2024-10', '2024-11', '2024-12', '2025-01', '2025-02', '2025-03'
-    ]
+    months = [f"{y}-{m:02d}" for y in [2024, 2025] for m in range(1, 13)]
+    months = months[3:15]  # Apr 2024 to Mar 2025
     month_to_q = {m: f"Q{((int(m[5:7]) - 1) // 3) + 1} {m[:4]}" for m in months}
-    df = df[df['month'].isin(months)]
-    df['Quarter'] = df['month'].map(month_to_q)
+    df1 = df1[df1['month'].isin(months)]
+    df2 = df2[df2['month'].isin(months)]
+    df1['Quarter'] = df1['month'].map(month_to_q)
+    df2['Quarter'] = df2['month'].map(month_to_q)
 
-    # Subtitle & Filter Summary
-    subtitle = f"Based on flats in {town.title()} with {flat_type.title()} flat type and same amenity features"
+    def compute_q_avg(df, town_label):
+        quarters = ['Q2 2024', 'Q3 2024', 'Q4 2024', 'Q1 2025']
+        if df.empty:
+            return pd.DataFrame({
+                'Quarter': quarters,
+                'adjusted_resale_price': [0] * len(quarters),
+                'Town': [town_label] * len(quarters)
+            }), None
+        else:
+            q_avg = df.groupby('Quarter')['adjusted_resale_price'].mean().fillna(0).round().reset_index()
+            q_avg['Quarter'] = pd.Categorical(q_avg['Quarter'], quarters, ordered=True)
+            q_avg = q_avg.sort_values('Quarter')
+            q_avg['Town'] = town_label
+            return q_avg, df
+
+    q_avg1, df1_valid = compute_q_avg(df1, town.title())
+    q_avg2, df2_valid = compute_q_avg(df2, town2.title())
+    combined_avg = pd.concat([q_avg1, q_avg2])
+
+    # Fallback values if town/town2 are None
+    town_display = (town or "Town 1").title()
+    town2_display = (town2 or "Town 2").title()
+
+    color_map = {
+        town_display: "#7F0019",    # dark red
+        town2_display: "#e6ab2d"    # mustard yellow
+    }
+
+    combined_avg['Town'] = combined_avg['Town'].replace({
+        town.title(): town_display,
+        town2.title(): town2_display
+    })
+
+    fig = px.bar(
+        combined_avg,
+        x='Quarter',
+        y='adjusted_resale_price',
+        color='Town',
+        color_discrete_map=color_map,
+        barmode='group',
+        labels={'adjusted_resale_price': 'Avg Price (SGD)'},
+        width=700,
+        height=400
+    )
+
+    fig.update_traces(width=0.3)
+    fig.update_layout(
+        margin=dict(l=10, r=10, t=40, b=20),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.3,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=14),
+        ),
+        yaxis=dict(tickformat=",", title=""),
+        xaxis=dict(title=""),
+        plot_bgcolor="#ffffff",
+        paper_bgcolor="#ffffff",
+        title=None
+    )
+
+    def build_summary(df, town_name):
+        if df is None or df.empty:
+            return html.Ul([
+                html.Li("📊 Average Price: $0"),
+                html.Li("📈 Max Price: No data available"),
+                html.Li("📉 Min Price: No data available")
+            ])
+
+        avg = int(df['adjusted_resale_price'].mean())
+        max_row = df.loc[df['adjusted_resale_price'].idxmax()]
+        min_row = df.loc[df['adjusted_resale_price'].idxmin()]
+        max_month = datetime.strptime(max_row['month'], "%Y-%m").strftime("%B %Y")
+        min_month = datetime.strptime(min_row['month'], "%Y-%m").strftime("%B %Y")
+
+        return html.Div([
+            html.H2(town_name, style={"fontWeight": "bold", "fontSize": "24px", "marginBottom": "5px"}),
+            html.H3("Within the last year", style={"fontWeight": "bold", "fontSize": "16px", "marginBottom": "5px"}),
+            html.P("Transactions from", style={"fontStyle": "italic", "fontSize": "14px"}),
+            html.P("Apr 2024 - Mar 2025", style={"fontStyle": "italic", "fontSize": "14px", "marginBottom": "20px"}),
+
+            html.H4("Average Price", style={"fontSize": "18px", "marginBottom": "5px", "fontStyle":"italic"}),
+            html.P(f"${avg:,}", style={"fontSize": "20px", "fontWeight": "bold", "marginBottom": "20px"}),
+
+            html.H4("Highest Sold", style={"fontSize": "16px", "marginBottom": "5px"}),
+            html.P(f"${int(max_row['adjusted_resale_price']):,}", style={"fontSize": "18px", "fontWeight": "bold", "margin": "0"}),
+            html.P(f"{max_row['address']}", style={"fontSize": "14px", "margin": "0", "fontStyle":"italic"}),
+            html.P(f"{max_month}", style={"fontSize": "14px", "marginBottom": "20px"}),
+
+            html.H4("Lowest Sold", style={"fontSize": "16px", "marginBottom": "5px"}),
+            html.P(f"${int(min_row['adjusted_resale_price']):,}", style={"fontSize": "18px", "fontWeight": "bold", "margin": "0"}),
+            html.P(f"{min_row['address']}", style={"fontSize": "14px", "margin": "0", "fontStyle":"italic"}),
+            html.P(f"{min_month}", style={"fontSize": "14px", "fontStyle": "italic"})
+        ], style={
+            "padding": "20px",
+            "fontFamily": "Inter, sans-serif"
+        })
+
+    summary1 = build_summary(df1_valid, town.title())
+    summary2 = build_summary(df2_valid, town2.title())
+
+    subtitle = f"Based on flats in {town.title()} and {town2.title()} with {flat_type.title()} flat type and same amenity features"
     summary_filters = html.Ul([
-        html.Li(f"🏙️ Town: {town}"),
+        html.Li(f"🏙️ Town 1: {town}"),
+        html.Li(f"🏙️ Town 2: {town2}") if town2 else None,
         html.Li(f"🏠 Flat Type: {flat_type}"),
         html.Li(f"📏 Floor Level: {floor_level}"),
         html.Li(f"🕒 Min Lease: {lease} years") if lease else None,
@@ -229,80 +402,13 @@ def update_quarterly_chart(filter_data):
         html.Li(f"🏫 Max Distance to School: {max_sch} km") if max_sch else None
     ])
 
-    # Empty case fallback
-    if df.empty:
-        fig = px.bar(
-            x=['Q2 2024', 'Q3 2024', 'Q4 2024', 'Q1 2025'],
-            y=[0, 0, 0, 0],
-            labels={'x': 'Quarter', 'y': 'Avg Price (SGD)'},
-            title='Average Price by Quarter',
-            width=500,
-            height=400
-        )
-        fig.update_traces(width=0.3, marker_color='lightgray')
-        fig.update_layout(margin=dict(l=10, r=10, t=40, b=20))
+    selected_summary = summary1 if summary_toggle == 'town1' else summary2
 
-        summary = html.Ul([
-            html.Li("📊 Average Price: $0"),
-            html.Li("📈 Max Price: No data available"),
-            html.Li("📉 Min Price: No data available")
-        ])
-        return fig, summary, subtitle, summary_filters
-
-    # Compute quarterly average
-    q_avg = df.groupby('Quarter')['adjusted_resale_price'].mean().fillna(0).round().reset_index()
-    q_avg['Quarter'] = pd.Categorical(q_avg['Quarter'], ['Q2 2024', 'Q3 2024', 'Q4 2024', 'Q1 2025'], ordered=True)
-    q_avg = q_avg.sort_values('Quarter')
-
-    # Bar chart
-    fig = px.bar(
-        q_avg,
-        x='Quarter',
-        y='adjusted_resale_price',
-        labels={'adjusted_resale_price': 'Avg Price (SGD)'},
-        title='Average Price by Quarter',
-        width=500,
-        height=400
-    )
-    fig.update_traces(width=0.3, marker_color='orange')
-    fig.update_layout(margin=dict(l=10, r=10, t=40, b=20))
-
-    # Summary Stats
-    avg = int(df['adjusted_resale_price'].mean())
-    max_row = df.loc[df['adjusted_resale_price'].idxmax()]
-    min_row = df.loc[df['adjusted_resale_price'].idxmin()]
-    max_month = datetime.strptime(max_row['month'], "%Y-%m").strftime("%B %Y")
-    min_month = datetime.strptime(min_row['month'], "%Y-%m").strftime("%B %Y")
-
-    summary = html.Div([
-            html.H3("Within the last year", style={"fontWeight": "bold", "fontSize": "24px", "marginBottom": "5px"}),
-            html.P("Transactions from April 2024 - March 2025", style={"fontStyle": "italic", "fontSize": "16px", "marginBottom": "20px"}),
-
-            html.H4("Average price of transactions", style={"fontSize": "20px", "marginBottom": "5px", "fontStyle":"italic"}),
-            html.P(f"${avg:,}", style={"fontSize": "20px", "fontWeight": "bold", "marginBottom": "20px"}),
-
-            html.H4("Highest transaction price", style={"fontSize": "20px", "marginBottom": "5px"}),
-            html.P(f"${int(max_row['adjusted_resale_price']):,}", style={"fontSize": "20px", "fontWeight": "bold", "margin": "0"}),
-            html.P(f"{max_row['address']}", style={"fontSize": "16px", "margin": "0", "fontStyle":"italic"}),
-            html.P(f"{max_month}", style={"fontSize": "16px", "marginBottom": "20px"}),
-
-            html.H4("Lowest transaction price", style={"fontSize": "20px", "marginBottom": "5px"}),
-            html.P(f"${int(min_row['adjusted_resale_price']):,}", style={"fontSize": "20px", "fontWeight": "bold", "margin": "0"}),
-            html.P(f"{min_row['address']}", style={"fontSize": "16px", "margin": "0", "fontStyle":"italic"}),
-            html.P(f"{min_month}", style={"fontSize": "16px"})
-        ], style={
-            "padding": "20px",
-            "backgroundColor": "#ffffff",  # <-- Set background to white
-            "border": "1px solid #ccc",
-            "borderRadius": "10px",
-            "fontFamily": "Inter, sans-serif"
-        })
-    
-    return fig, summary, subtitle, summary_filters
+    return fig, selected_summary, subtitle, summary_filters
 
 # Callback to filter and display table
 @callback(
-    Output('filter-table', 'children'),
+    Output('filter-table-town1', 'children'),
     Output('selected-postal-store', 'data'),
     Input('user-filter-store', 'data'),
     Input('url', 'pathname'),
@@ -311,7 +417,7 @@ def update_table(filter_data, pathname):
     if pathname != "/output-general" or not filter_data:
         return html.Div("No data."), None
 
-    town = filter_data.get('town')
+    town = filter_data.get('town1')
     flat_type = filter_data.get('flat_type')
     floor_level = filter_data.get('floor_level')
     lease = filter_data.get('remaining_lease')
@@ -374,22 +480,131 @@ def update_table(filter_data, pathname):
     if table_df.empty:
         return html.Div("No results."), None
 
+
     return dash_table.DataTable(
-        id='transaction-table',
+        id='transaction-table-town1',  # or 'transaction-table-town2'
         columns=[{"name": i, "id": i} for i in table_df.columns],
         data=table_df.to_dict('records'),
         row_selectable='single',
-        style_cell={"textAlign": "left", "fontFamily": "Inter, sans-serif", "padding": "10px"},
-        style_header={"fontWeight": "bold"},
+        style_cell={
+            'fontFamily': 'Inter, sans-serif',
+            'textAlign': 'left',
+            'padding': '16px',
+            'border': 'none',
+            'fontSize': '15px',
+            'backgroundColor': '#f9f9f9'
+        },
+        style_header={
+            'backgroundColor': '#ffffff',
+            'fontWeight': 'bold',
+            'borderBottom': '2px solid #dddddd',
+            'fontSize': '16px'
+        },
+        style_table={
+            'width': '100%',
+            'marginTop': '10px',
+            'borderCollapse': 'separate',
+            'borderSpacing': '0 8px'
+        },
         selected_rows=[],
         page_size=10
-    ), table_df.iloc[0]['postal_code']  # default selection
+    ), table_df.to_dict('records')
+
+
+@callback(
+    Output('filter-table-town2', 'children'),
+    Output('selected-postal-store-town2', 'data'),
+    Input('user-filter-store', 'data'),
+    Input('url', 'pathname'),
+)
+def update_table_town2(filter_data, pathname):
+    if pathname != "/output-general" or not filter_data or not filter_data.get("town2"):
+        return html.Div("No data."), None
+
+    town2 = filter_data.get('town2')
+    flat_type = filter_data.get('flat_type')
+    floor_level = filter_data.get('floor_level')
+    lease = filter_data.get('remaining_lease')
+    max_mrt = filter_data.get('max_dist_mrt')
+    max_sch = filter_data.get('max_dist_school')
+    flat_type_col = f"flat_type_{flat_type}"
+
+    df = hdb_df[
+        (hdb_df['town'] == town2) &
+        (hdb_df[flat_type_col] == 1)
+    ]
+
+    df['storey_median'] = pd.to_numeric(df['storey_median'], errors='coerce')
+    df['low_threshold'] = (df['max_floor_lvl'] * 0.25).round()
+    df['high_threshold'] = (df['max_floor_lvl'] * 0.75).round()
+
+    def classify_floor(row):
+        if pd.isna(row['storey_median']) or pd.isna(row['max_floor_lvl']):
+            return None
+        if row['storey_median'] <= row['low_threshold']:
+            return "Low"
+        elif row['storey_median'] > row['high_threshold']:
+            return "High"
+        else:
+            return "Medium"
+
+    df['floor_category'] = df.apply(classify_floor, axis=1)
+
+    if floor_level:
+        df = df[df['floor_category'] == floor_level]
+    if lease:
+        df = df[df['remaining_lease'] >= lease]
+    if max_mrt:
+        df = df[df['min_dist_mrt'] <= max_mrt]
+    if max_sch:
+        df = df[df['min_dist_sch'] <= max_sch]
+
+    df['address'] = df['block'].astype(str).str.strip() + " " + df['street_name'].str.title()
+    df['Distance to MRT (km)'] = df['min_dist_mrt'].round(2)
+    df['Distance to School (km)'] = df['min_dist_sch'].round(2)
+
+    table_df = df[['address', 'adjusted_resale_price', 'month', 'postal_code', 'Distance to MRT (km)', 'Distance to School (km)']].rename(columns={
+        'address': 'Address', 'adjusted_resale_price': 'Price (SGD)', 'month': 'Date Sold'
+    })
+
+    if table_df.empty:
+        return html.Div("No results."), None
+
+    return dash_table.DataTable(
+        id='transaction-table-town2',  # or 'transaction-table-town2'
+        columns=[{"name": i, "id": i} for i in table_df.columns],
+        data=table_df.to_dict('records'),
+        row_selectable='single',
+        style_cell={
+            'fontFamily': 'Inter, sans-serif',
+            'textAlign': 'left',
+            'padding': '16px',
+            'border': 'none',
+            'fontSize': '15px',
+            'backgroundColor': '#f9f9f9'
+        },
+        style_header={
+            'backgroundColor': '#ffffff',
+            'fontWeight': 'bold',
+            'borderBottom': '2px solid #dddddd',
+            'fontSize': '16px'
+        },
+        style_table={
+            'width': '100%',
+            'marginTop': '10px',
+            'borderCollapse': 'separate',
+            'borderSpacing': '0 8px'
+        },
+        selected_rows=[],
+        page_size=10
+    ), table_df.to_dict('records')
+
 
 # Callback to update details on click
 @callback(
     Output('property-details', 'children'),
-    Input('transaction-table', 'selected_rows'),
-    State('transaction-table', 'data')
+    Input('transaction-table-town1', 'selected_rows'),
+    State('transaction-table-town1', 'data')
 )
 def display_details(selected_rows, table_data):
     if not selected_rows or not table_data:
@@ -411,20 +626,56 @@ def display_details(selected_rows, table_data):
         html.P(f"🏙️ Distance to CBD: {result['cbd_dist']} km"),
 
     ], style={
-        'fontFamily': 'Inter, sans-serif',
-        'backgroundColor': '#fefefe',
-        'border': '1px solid #ccc',
-        'borderRadius': '10px',
-        'padding': '20px',
-        'textAlign': 'left'
+        "border": "1px solid lightgray",
+        "padding": "20px",
+        "borderRadius": "10px",
+        "backgroundColor": "white",
+        "fontFamily": "Inter, sans-serif",
+        "width": "100%",
+        "boxSizing": "border-box"
     })
+
+
+@callback(
+    Output('property-details-town2', 'children'),
+    Input('transaction-table-town2', 'selected_rows'),
+    State('transaction-table-town2', 'data')
+)
+def display_details_town2(selected_rows, table_data):
+    if not selected_rows or not table_data:
+        return ""
+
+    row = table_data[selected_rows[0]]
+    postal = row['postal_code']
+    result = get_all_nearest_amenities(postal, hdb_df, schools_df, mrt_df, hawker_df)
+
+    if result is None:
+        return html.Div("⚠️ Unable to retrieve details.")
+
+    return html.Div([
+        html.H4("🏠 Property details (Town 2)", style={'marginBottom': '20px'}),
+        html.P(f"📍 {result['address']}"),
+        html.P(f"🚇 Nearest MRT: {result['mrt'][0]} ({result['mrt'][1]} km)"),
+        html.P(f"🎓 Nearest School: {result['school'][0]} ({result['school'][1]} km)"),
+        html.P(f"🍜 Nearest Hawker Center: {result['hawker'][0]} ({result['hawker'][1]} km)"),
+        html.P(f"🏙️ Distance to CBD: {result['cbd_dist']} km"),
+    ], style={
+        "border": "1px solid lightgray",
+        "padding": "20px",
+        "borderRadius": "10px",
+        "backgroundColor": "white",
+        "fontFamily": "Inter, sans-serif",
+        "width": "100%",
+        "boxSizing": "border-box"
+    })
+
 
 
 @callback(
     Output('map-markers', 'children'),
     Output('amenity-map', 'center'),
-    Input('transaction-table', 'selected_rows'),
-    State('transaction-table', 'data')
+    Input('transaction-table-town1', 'selected_rows'),
+    State('transaction-table-town1', 'data')
 )
 def update_map_and_center(selected_rows, table_data):
     if not selected_rows or not table_data:
@@ -478,3 +729,129 @@ def update_map_and_center(selected_rows, table_data):
         markers.append(dl.Marker(position=[hawker_lat, hawker_lon], children=dl.Tooltip(f"🍜 Hawker: {result['hawker'][0]} ({result['hawker'][1]} km)")))
 
     return markers, [hdb_lat, hdb_lon]
+
+@callback(
+    Output('map-markers-town2', 'children'),
+    Output('amenity-map-town2', 'center'),
+    Input('transaction-table-town2', 'selected_rows'),
+    State('transaction-table-town2', 'data')
+)
+def update_map_and_center_town2(selected_rows, table_data):
+    if not selected_rows or not table_data:
+        raise dash.exceptions.PreventUpdate
+
+    selected_row = table_data[selected_rows[0]]
+    postal_code = selected_row.get("postal_code")
+
+    if not postal_code:
+        raise dash.exceptions.PreventUpdate
+
+    postal_code = str(postal_code).zfill(6)
+
+    result = get_all_nearest_amenities(
+        postal_code=postal_code,
+        hdb_amenities_dist_with_postal=hdb_df,
+        all_primary_schools=schools_df,
+        mrt_stations=mrt_df,
+        hawkercentrecoord=hawker_df
+    )
+
+    if result is None:
+        raise dash.exceptions.PreventUpdate
+
+    hdb_row = hdb_df[hdb_df['postal_code'] == postal_code]
+    if hdb_row.empty:
+        raise dash.exceptions.PreventUpdate
+
+    hdb_lat = hdb_row.iloc[0]['latitude']
+    hdb_lon = hdb_row.iloc[0]['longitude']
+
+    def find_coords(name, df, name_col):
+        row = df[df[name_col] == name]
+        if not row.empty:
+            return row.iloc[0]['latitude'], row.iloc[0]['longitude']
+        return None, None
+
+    mrt_lat, mrt_lon = find_coords(result["mrt"][0], mrt_df, 'station_name')
+    sch_lat, sch_lon = find_coords(result["school"][0], schools_df, 'SchoolName')
+    hawker_lat, hawker_lon = find_coords(result["hawker"][0], hawker_df, 'hc_name')
+
+    markers = []
+    if hdb_lat and hdb_lon:
+        markers.append(dl.Marker(position=[hdb_lat, hdb_lon], children=dl.Tooltip("🏠 HDB Location")))
+    if mrt_lat and mrt_lon:
+        markers.append(dl.Marker(position=[mrt_lat, mrt_lon], children=dl.Tooltip(f"🚇 MRT: {result['mrt'][0]} ({result['mrt'][1]} km)")))
+    if sch_lat and sch_lon:
+        markers.append(dl.Marker(position=[sch_lat, sch_lon], children=dl.Tooltip(f"🏫 School: {result['school'][0]} ({result['school'][1]} km)")))
+    if hawker_lat and hawker_lon:
+        markers.append(dl.Marker(position=[hawker_lat, hawker_lon], children=dl.Tooltip(f"🍜 Hawker: {result['hawker'][0]} ({result['hawker'][1]} km)")))
+
+    return markers, [hdb_lat, hdb_lon]
+
+@callback(
+    Output('transaction-table-town1', 'style_data_conditional'),
+    Input('transaction-table-town1', 'active_cell')
+)
+def style_active_row_town1(active_cell):
+    style = [
+        {
+            'if': {'row_index': 'odd'},
+            'backgroundColor': '#fcfcfc',
+        },
+        {
+            'if': {'row_index': 'even'},
+            'backgroundColor': '#f9f9f9',
+        }
+    ]
+    if active_cell:
+        row_idx = active_cell['row']
+        style.append({
+            'if': {'row_index': row_idx},
+            'backgroundColor': '#7F0019',
+            'color': 'white',
+            'borderTop': '2px solid #dddddd'
+        })
+    return style
+
+@callback(
+    Output('transaction-table-town2', 'style_data_conditional'),
+    Input('transaction-table-town2', 'active_cell')
+)
+def style_active_row_town2(active_cell):
+    style = [
+        {
+            'if': {'row_index': 'odd'},
+            'backgroundColor': '#fcfcfc',
+        },
+        {
+            'if': {'row_index': 'even'},
+            'backgroundColor': '#f9f9f9',
+        }
+    ]
+    if active_cell:
+        row_idx = active_cell['row']
+        style.append({
+            'if': {'row_index': row_idx},
+            'backgroundColor': '#7F0019',
+            'color': 'white',
+            'borderTop': '2px solid #dddddd'
+        })
+    return style
+
+@callback(
+    Output('summary-toggle', 'options'),
+    Output('summary-toggle', 'value'),
+    Input('user-filter-store', 'data'),
+)
+def update_toggle_options(filter_data):
+    if not filter_data:
+        raise dash.exceptions.PreventUpdate
+
+    town1 = filter_data.get('town1', 'Town 1')
+    town2 = filter_data.get('town2', 'Town 2')
+
+    options = [{'label': f'{town1.title()} ', 'value': 'town1'}]
+    if town2:
+        options.append({'label': f'{town2.title()} ', 'value': 'town2'})
+
+    return options, 'town1'

@@ -2,7 +2,7 @@ import pandas as pd
 hdb_df = pd.read_csv("dataset/hdb_informations.csv")
 floor_percentiles = {
     'Low': 0.25,
-    'Middle': 0.5,
+    'Mid': 0.5,
     'High': 0.75
 }
 

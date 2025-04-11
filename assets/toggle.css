@@ -14,8 +14,8 @@
   
   /* Default (unchecked) labels: maroon bg, white text */
   .mode-toggle-container label.mode-toggle-label {
-    background-color: #7f0019;
-    color: #fff;
+    background-color: #fff;
+    color: #000;
     padding: 10px 20px;
     cursor: pointer;
     font-family: 'Inter', sans-serif;
@@ -27,7 +27,7 @@
   
   /* Checked label: white bg, black text */
   .mode-toggle-container label.mode-toggle-label:has(input:checked) {
-    background-color: #fff;
-    color: #000;
+    background-color: #7f0019;
+    color: #fff;
   }
   
