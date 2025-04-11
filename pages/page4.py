@@ -2,6 +2,7 @@ import dash
 from dash import html, dcc, Input, Output, State, callback, register_page, ctx
 from dash.exceptions import PreventUpdate
 import dash_table
+import dash_leaflet as dl
 import joblib
 import pandas as pd
 from models.model_tuning import conformal_predict
@@ -23,11 +24,11 @@ layout = html.Div([
         html.Div(id="prediction-title", style={"fontSize": "20px", "fontWeight": "bold",
                                                "fontFamily": "Inter, sans-serif", "marginBottom": "10px"}),
         html.Div(id="price-section", style={"marginBottom": "30px", "fontFamily": "Inter, sans-serif"})
-    ], style={"maxWidth": "1000px", "margin": "0 auto", "textAlign": "left", "paddingLeft": "20px"}),
+    ], style={"maxWidth": "1000px", "margin": "0 auto", "textAlign": "left"}),
 
     # Price Trends Section
     html.Div([
-        html.H4("Price trends for this property", style={"fontFamily": "Inter, sans-serif"}),
+        html.H4("Price trends for this property", style={"fontFamily": "Inter, sans-serif", "fontSize": '18px'}),
         html.P(id="price-trend-text", style={"fontFamily": "Inter, sans-serif"}),
         dcc.RadioItems(id='price-trend-toggle',
             options=[{'label': 'Within 1km', 'value': '1km'}, {'label': 'Your block', 'value': 'block'}],
@@ -48,11 +49,11 @@ layout = html.Div([
             ], style={"flex": "2.5", "height": "375px", "display": "flex"})
         ], style={"display": "flex", "maxWidth": "1000px", "margin": "0 auto",
                   "gap": "20px", "marginTop": "20px"})
-    ], style={"margin": "0 auto", "maxWidth": "1000px", "padding": "20px"}),
+    ], style={"margin": "0 auto", "maxWidth": "1000px"}),
 
     # Recent Transactions Table
     html.Div([
-        html.H4("Recent Transactions", style={"fontFamily": "Inter, sans-serif"}),
+        html.H4("Recent Transactions", style={"fontFamily": "Inter, sans-serif", "fontSize": '18px'}),
         html.Div(id='recent-transactions-label', style={"fontFamily": "Inter, sans-serif"}),
         dash_table.DataTable(
             id='transaction-table',
@@ -88,20 +89,62 @@ layout = html.Div([
 
     # Property details (with SVG icons + map beside)
     html.Div([
-        html.H4("Property details", style={"fontFamily": "Inter, sans-serif"}),
 
-        html.Div([
-            html.Div(id='amenities-list', style={
-                "fontFamily": "Inter, sans-serif", "flex": "1", "paddingRight": "30px"
+        # Combine header and amenities into a single left column
+        html.Div([  
+            html.H4("Property details", style={
+                "fontFamily": "Inter, sans-serif",
+                "fontSize": '18px',
+                "marginBottom": "16px",
+                "marginTop": '50px'
             }),
-            html.Img(id='map-img', style={
-                "width": "100%", "maxWidth": "400px", "border": "1px solid #ccc"
+            html.Div(id='amenities-list', style={
+                "fontFamily": "Inter, sans-serif",
+                "flex": "1",
+                "overflow": "hidden",
+                "display": "flex",
+                "flexDirection": "column",
+                "justifyContent": "space-between",
             })
         ], style={
-            "display": "flex", "marginTop": "20px", "alignItems": "flex-start", "gap": "40px"
-        })
+            "flex": "1",
+            "height": "340px",  # match the map height
+            "display": "flex",
+            "flexDirection": "column",
+            "justifyContent": "space-between"
+        }),
 
-    ], style={"maxWidth": "1000px", "margin": "0 auto", "marginTop": "40px", "paddingBottom": "40px"})
+        # Map
+        dl.Map(id='selected-map',
+            center=[1.3521, 103.8198],
+            zoom=16,
+            children=[
+                dl.TileLayer(
+                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                    attribution='&copy; <a href="https://carto.com/">CartoDB</a>'
+                ),
+                dl.LayerGroup(id='selected-marker')
+            ],
+            style={
+                "width": "100%",
+                "maxWidth": "420px",
+                "height": "315px",
+                "borderRadius": "12px",
+                "boxShadow": "0px 0px 12px rgba(0,0,0,0.15)",
+                "border": "1px solid #ddd",
+                'marginTop': '50px'
+            }
+        )
+
+    ], style={
+        "display": "flex",
+        "marginTop": "60px",
+        "alignItems": "flex-start",
+        "gap": "40px",
+        "maxWidth": "1000px",
+        "margin": "0 auto",
+        "paddingBottom": "40px"
+    })
 ], style={"backgroundColor": "white", "padding": "20px"})
 
 
@@ -207,7 +250,8 @@ def update_chart(toggle_value, manual_data, guru_data):
 
 @callback(
     Output("amenities-list", "children"),
-    Output("map-img", "src"),
+    Output("selected-marker", "children"),
+    Output("selected-map", "center"),
     Input("transaction-table", "active_cell")
 )
 def update_amenities_and_map(active_cell):
@@ -225,7 +269,7 @@ def update_amenities_and_map(active_cell):
     lon = full_row.get('longitude')
 
     if lat is None or lon is None or pd.isna(lat) or pd.isna(lon):
-        return [html.Div("No geolocation data available for this transaction.")], ""
+        return [html.Div("No geolocation data available for this transaction.")], [], [1.3521, 103.8198]
 
     coord_row = {
         "latitude": float(lat),
@@ -237,7 +281,7 @@ def update_amenities_and_map(active_cell):
     def make_amenity(icon, title, value):
         return html.Div([
             html.Img(src=f"/assets/{icon}", style={
-                "width": "28px", "height": "28px", "marginRight": "12px", "flexShrink": "0", "marginTop": "2px"
+                "width": "45px", "height": "45px", "marginRight": "12px", "flexShrink": "0", "marginTop": "2px"
             }),
             html.Div([
                 html.Div(title, style={
@@ -262,9 +306,9 @@ def update_amenities_and_map(active_cell):
                      f"{nearest['distance_to_cbd']} km")
     ]
 
-    map_url = f"https://maps.googleapis.com/maps/api/staticmap?center={lat},{lon}&zoom=15&size=400x300&markers=color:red%7C{lat},{lon}&key=YOUR_GOOGLE_MAPS_API_KEY"
+    marker = dl.Marker(position=[lat, lon], children=dl.Tooltip("🏠 Selected Property"))
 
-    return amenities, map_url
+    return amenities, [marker], [lat, lon]
 
 
 @callback(
