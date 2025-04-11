@@ -165,5 +165,4 @@ def conformal_predict(model, X_input, q):
     y_pred = model.predict(dinput)
     y_lower = y_pred - q
     y_upper = y_pred + q
-    print(f" Predicted: {y_pred[0]:.2f}, 90% CI: [{y_lower[0]:.2f}, {y_upper[0]:.2f}]")
     return y_pred, y_lower, y_upper
