@@ -13,6 +13,7 @@ app = Dash(
     suppress_callback_exceptions=True,
     external_stylesheets=external_stylesheets
 )
+server = app.server
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
