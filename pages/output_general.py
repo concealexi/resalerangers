@@ -76,33 +76,32 @@ layout = html.Div([
 
         html.Div([
             html.Div([
-            dcc.Graph(id='quarterly-bar-chart', config={'displayModeBar': False}, style={
-                "height": "100%", "width": "100%"
-            })
-        ], style={
-            "flexGrow": 7.5,
-            "border": "1px solid lightgray",
-            "padding": "20px 20px 30px 20px",
-            "borderRadius": "10px",
-            "backgroundColor": "white",
-            "display": "flex",        # <-- add this
-            "alignItems": "stretch"   # <-- and this
-        }),
-        html.Div(id='price-summary-container', style={
-            "flexGrow": 2.5,
-            "border": "1px solid lightgray",
-            "padding": "5px",
-            "borderRadius": "10px",
-            "fontFamily": "Inter, sans-serif",
-            "backgroundColor": "#fff",
-            "display": "flex",        # <-- and this
-            "flexDirection": "column",# <-- and this
-            "justifyContent": "space-between"  # <-- optional
-        })
+                dcc.Graph(id="quarterly-bar-chart", config={'displayModeBar': False}, style={"height": "100%", "width": "100%"})
+            ], style={
+                "flex": "7",
+                "border": "1px solid lightgray",
+                "padding": "20px",
+                "borderRadius": "10px",
+                "backgroundColor": "white",
+                "height": "425px",
+                "boxSizing": "border-box"
+            }),
 
+            html.Div(id="price-summary-container", style={
+                "flex": "3",
+                "border": "1px solid lightgray",
+                "padding": "20px",
+                "borderRadius": "10px",
+                "fontFamily": "Inter, sans-serif",
+                "backgroundColor": "#fff",
+                "height": "425px",
+                "boxSizing": "border-box"
+            })
         ], style={
             "display": "flex",
             "gap": "20px",
+            "maxWidth": "1000px",
+            "margin": "0 auto",
             "marginTop": "20px",
             "alignItems": "stretch"
         }),
@@ -185,8 +184,7 @@ layout = html.Div([
 
     ], style={  # 👈 NEW OUTER CONTAINER STYLE
         'maxWidth': '1000px',
-        'margin': '0 auto',
-        'padding': '0 20px'
+        'margin': '0 auto'
     })
 ])
 
@@ -329,23 +327,35 @@ def update_quarterly_chart(filter_data, summary_toggle):
         color_discrete_map=color_map,
         barmode='group',
         labels={'adjusted_resale_price': 'Avg Price (SGD)'},
-        width=700,
-        height=400
+        width = 700,
+        height = 400
     )
 
     fig.update_traces(width=0.3)
     fig.update_layout(
-        margin=dict(l=10, r=10, t=40, b=20),
+        margin=dict(l=10, r=10, t=20, b=20),  # tight bottom
         legend=dict(
             orientation="h",
             yanchor="bottom",
-            y=-0.3,
+            y= -0.17,
             xanchor="center",
             x=0.5,
-            font=dict(size=14),
+            font=dict(size=13)
         ),
-        yaxis=dict(tickformat=",", title=""),
-        xaxis=dict(title=""),
+        yaxis=dict(
+            title="",
+            tickformat=",",
+            showgrid=True,
+            zeroline=True,
+            zerolinewidth=2,
+            zerolinecolor='lightgray',
+            gridcolor="lightgray",
+            gridwidth=1
+        ),
+        xaxis=dict(
+            title="",
+            showgrid=False
+        ),
         plot_bgcolor="#ffffff",
         paper_bgcolor="#ffffff",
         title=None
@@ -353,36 +363,35 @@ def update_quarterly_chart(filter_data, summary_toggle):
 
     def build_summary(df, town_name):
         if df is None or df.empty:
-            return html.Ul([
-                html.Li("📊 Average Price: $0"),
-                html.Li("📈 Max Price: No data available"),
-                html.Li("📉 Min Price: No data available")
-            ])
+            return html.Div("No data available.")
 
         avg = int(df['adjusted_resale_price'].mean())
         max_row = df.loc[df['adjusted_resale_price'].idxmax()]
         min_row = df.loc[df['adjusted_resale_price'].idxmin()]
-        max_month = datetime.strptime(max_row['month'], "%Y-%m").strftime("%B %Y")
-        min_month = datetime.strptime(min_row['month'], "%Y-%m").strftime("%B %Y")
+        max_month = datetime.strptime(max_row['month'], "%Y-%m").strftime("%b %Y")
+        min_month = datetime.strptime(min_row['month'], "%Y-%m").strftime("%b %Y")
 
         return html.Div([
-            html.H2(town_name, style={"fontWeight": "bold", "fontSize": "24px", "marginBottom": "5px"}),
-            html.H3("Within the last year", style={"fontWeight": "bold", "fontSize": "16px", "marginBottom": "5px"}),
-            html.P("Transactions from", style={"fontStyle": "italic", "fontSize": "14px"}),
-            html.P("Apr 2024 - Mar 2025", style={"fontStyle": "italic", "fontSize": "14px", "marginBottom": "20px"}),
+            html.H2(town_name, style={"fontWeight": "bold", "fontSize": "22px", "marginBottom": "10px"}),
 
-            html.H4("Average Price", style={"fontSize": "18px", "marginBottom": "5px", "fontStyle":"italic"}),
-            html.P(f"${avg:,}", style={"fontSize": "20px", "fontWeight": "bold", "marginBottom": "20px"}),
+            html.H3("Within the last year", style={"fontWeight": "bold", "fontSize": "16px", "marginBottom": "10px"}),
 
-            html.H4("Highest Sold", style={"fontSize": "16px", "marginBottom": "5px"}),
-            html.P(f"${int(max_row['adjusted_resale_price']):,}", style={"fontSize": "18px", "fontWeight": "bold", "margin": "0"}),
-            html.P(f"{max_row['address']}", style={"fontSize": "14px", "margin": "0", "fontStyle":"italic"}),
-            html.P(f"{max_month}", style={"fontSize": "14px", "marginBottom": "20px"}),
+            html.Div("Average Price", style={"fontStyle": "italic", "fontSize": "16px", "fontWeight": "bold"}),
+            html.Div(f"${avg:,}", style={"fontSize": "20px", "fontWeight": "bold", "marginBottom": "25px"}),
 
-            html.H4("Lowest Sold", style={"fontSize": "16px", "marginBottom": "5px"}),
-            html.P(f"${int(min_row['adjusted_resale_price']):,}", style={"fontSize": "18px", "fontWeight": "bold", "margin": "0"}),
-            html.P(f"{min_row['address']}", style={"fontSize": "14px", "margin": "0", "fontStyle":"italic"}),
-            html.P(f"{min_month}", style={"fontSize": "14px", "fontStyle": "italic"})
+            html.Div("Highest Sold", style={"fontSize": "15px", "fontWeight": "bold"}),
+            html.Div([
+                html.Span(f"${int(max_row['adjusted_resale_price']):,}", style={"fontSize": "16px", "fontWeight": "bold"}),
+                html.Span(f"  {max_month}", style={"fontSize": "14px", "marginLeft": "6px"})
+            ], style={"fontSize": "15px"}),
+            html.Div(f"{max_row['address']}", style={"fontSize": "13px", "fontStyle": "italic", "marginBottom": "20px"}),
+
+            html.Div("Lowest Sold", style={"fontSize": "15px", "fontWeight": "bold"}),
+            html.Div([
+                html.Span(f"${int(min_row['adjusted_resale_price']):,}", style={"fontSize": "16px", "fontWeight": "bold"}),
+                html.Span(f"  {min_month}", style={"fontSize": "14px", "marginLeft": "6px"})
+            ], style={"fontSize": "15px"}),
+            html.Div(f"{min_row['address']}", style={"fontSize": "13px", "fontStyle": "italic"})
         ], style={
             "padding": "20px",
             "fontFamily": "Inter, sans-serif"

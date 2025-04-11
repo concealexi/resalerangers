@@ -1,7 +1,6 @@
 import dash
-from dash import html, dcc, Input, Output, State, callback, register_page, ctx
+from dash import html, dcc, Input, Output, State, callback, register_page, ctx, dash_table
 from dash.exceptions import PreventUpdate
-import dash_table
 import dash_leaflet as dl
 import joblib
 import pandas as pd

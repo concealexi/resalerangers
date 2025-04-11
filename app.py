@@ -1,7 +1,6 @@
 import dash 
 from dash import html, dcc, register_page, callback, Input, Output
-from dash import Dash, page_container
-import dash_table
+from dash import Dash, page_container, dash_table
 
 external_stylesheets = [
     "https://fonts.googleapis.com/css2?family=Inter&display=swap",
@@ -31,4 +30,4 @@ app.layout = html.Div([
 })
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run(debug=True)
