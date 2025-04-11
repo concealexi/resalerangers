@@ -70,22 +70,39 @@ layout = html.Div(children =[
         ),
 
     html.Div([
+        html.Label("Town", style={
+            'fontFamily': 'Inter, sans-serif',
+            'fontWeight': 'bold',
+            'marginBottom': '8px',
+            'display': 'block',
+            'textAlign': 'left'
+        }),
 
-        html.Label("Town", style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
-        dcc.Dropdown(
-            id='newbie-town-dropdown',
-            options=[{'label': town.title(), 'value': town} for town in towns],
-            placeholder="Enter a town",
-            style=common_dropdown_style
-        ),
-        dcc.Dropdown(
-            id='newbie-town-dropdown_2',
-            options=[{'label': town.title(), 'value': town} for town in towns],
-            placeholder="Enter a town",
-            style=common_dropdown_style
-        ),
-        html.P("Looking to compare towns? You may select up to 2 to view!", style={
-            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Inter, sans-serif',
+        html.Div([
+            dcc.Dropdown(
+                id='newbie-town-dropdown',
+                options=[{'label': town.title(), 'value': town} for town in towns],
+                placeholder="Enter first town",
+                style={'width': '100%'}
+            ),
+            dcc.Dropdown(
+                id='newbie-town-dropdown_2',
+                options=[{'label': town.title(), 'value': town} for town in towns],
+                placeholder="Enter second town",
+                style={'width': '100%'}
+            )
+        ], style={
+            'display': 'flex',
+            'gap': '20px',
+            'justifyContent': 'space-between',
+            'marginBottom': '10px'
+        }),
+
+        html.P("Please select 2 towns to continue!", style={
+            'fontSize': '13px',
+            'color': '#777',
+            'fontFamily': 'Inter, sans-serif',
+            'textAlign': 'center',
             'marginBottom': '20px'
         }),
 
