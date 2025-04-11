@@ -15,8 +15,8 @@ The data is available on [data.gov.sg] (https://data.gov.sg/).
 - [Resale Flat Prices] (https://data.gov.sg/collections/189/view)
 
 ## Packages used
-Web framework: dash, flask
-Data processing: pandas, numpy
-Machine learning: xgboost, joblib
-Geospatial utilities: haversine, geopy, geohash
-Visualization: plotly
+**Web framework:** dash, flask  
+**Data processing:** pandas, numpy  
+**Machine learning:** xgboost, joblib  
+**Geospatial utilities:** haversine, geopy, geohash  
+**Visualization:** plotly
