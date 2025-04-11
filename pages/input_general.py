@@ -1,209 +1,245 @@
+import dash
 from dash import html, dcc, register_page, callback, Output, Input, State
 import pandas as pd
 import dash_leaflet as dl
 
-# Load the CSV file
-hdb_df = pd.read_csv('dataset/hdb_final_dataset.csv')
+# Load and merge data
+hdb_df = pd.read_csv("dataset/hdb_final_dataset.csv")
+hdb_info = pd.read_csv("dataset/hdb_informations.csv")
+hdb_df = pd.merge(hdb_df, hdb_info[['postal_code', 'max_floor_lvl']], on='postal_code', how='left')
 
 # Preprocess: get unique towns and map postal codes by town
 towns = sorted(hdb_df['town'].dropna().unique())
 town_postal_map = hdb_df.groupby('town')['postal_code'].apply(list).to_dict()
 
+# Common styling
+
+common_input_style = {
+    'width': '100%',
+    'fontSize': '16px',
+    'marginBottom': '20px',
+    'fontFamily': 'Inter, sans-serif',
+    'padding': '10px',
+    'border': '1px solid #ccc',
+    'borderRadius': '4px',
+    'boxSizing': 'border-box',
+    'backgroundColor': 'white'
+}
+
+common_dropdown_style = {
+    'width': '100%',
+    'fontSize': '16px',
+    'marginBottom': '20px'
+}
+
 register_page(__name__, path="/input-general")
 
-layout = html.Div([
-    html.H2("Find Your Ideal Home!", style={
-        'fontFamily': 'Helvetica',
-        'textAlign': 'center',
-        'marginBottom': '20px'
-    }),
+layout = html.Div(children =[
+    dcc.Location(id='url', refresh=True),
+    html.Div(
+            children=[
+                dcc.Link("< back to start", href="/", style={
+                    'fontFamily': 'Inter, sans-serif',
+                    'fontSize': '14px',
+                    'color': 'black',
+                    'textDecoration': 'none'
+                })
+            ],
+            style={'marginLeft': '20px', 'marginTop': '20px'}
+        ),
+
+    html.H1("What property are you looking for?",
+            style={
+                'textAlign': 'center',
+                'fontFamily': 'Inter, sans-serif',
+                'fontWeight': 'bold',
+                'fontSize': '2rem',
+                'marginTop': '10px',
+                'color': 'black'
+            }
+        ),
+    html.P(
+            "Please fill in the characteristics for the flat of your choice",
+            style={
+                'textAlign': 'center',
+                'fontFamily': 'Inter, sans-serif',
+                'fontSize': '1rem',
+                'marginBottom': '30px',
+                'color': 'black'
+            }
+        ),
 
     html.Div([
 
-        # Town Dropdown
-        html.Label("Select a Town:", style={'fontFamily': 'Helvetica'}),
+        html.Label("Town", style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
         dcc.Dropdown(
             id='newbie-town-dropdown',
             options=[{'label': town.title(), 'value': town} for town in towns],
-            placeholder="Select a town",
-            style={'marginBottom': '25px', 'fontFamily': 'Helvetica'}
+            placeholder="Enter a town",
+            style=common_dropdown_style
         ),
-
-        # Postal Code Dropdown (dynamic)
-        html.Label("Available Postal Codes:", style={'fontFamily': 'Helvetica'}),
-        dcc.Dropdown(
-            id='newbie-postal-dropdown',
-            placeholder="Select a postal code",
-            style={'marginBottom': '30px', 'fontFamily': 'Helvetica'}
-        ),
-
-        # Flat Type Dropdown
-        html.Label("Flat Type:", style={'fontFamily': 'Helvetica'}),
-        dcc.Dropdown(
-            id='expert-flat-type',
-            options=[],  # Initially empty, will be updated by callback
-            placeholder='Select Flat Type',
-            style={'marginBottom': '15px', 'fontFamily': 'Helvetica'}
-        ),
-
-        # Floor Level Dropdown
-        html.Label("Floor Level:", style={'fontFamily': 'Helvetica'}),
-        dcc.Dropdown(
-            id='expert-floor-level',
-            options=[],  # To be dynamically filled
-            placeholder='Select Floor Level',
-            style={'marginBottom': '30px', 'fontFamily': 'Helvetica'}
-        ),
-
-        # Submit button inside a styled outer box
-        html.Div([
-            html.Button("Submit", id="newbie-submit", n_clicks=0, style={
-                'backgroundColor': '#ff963b',
-                'color': 'white',
-                'padding': '10px 20px',
-                'border': '2px solid #e67e22',
-                'borderRadius': '8px',
-                'fontSize': '16px',
-                'cursor': 'pointer',
-                'fontFamily': 'Helvetica'
-            })
-        ], style={
-            'border': '2px solid #ccc',
-            'padding': '10px',
-            'borderRadius': '12px',
-            'backgroundColor': '#fffaf3',
-            'textAlign': 'center',
-            'width': 'fit-content',
-            'margin': '0 auto',
-            'fontFamily': 'Helvetica'
+        html.P("Looking to compare towns? You may select up to 2 to view!", style={
+            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Inter, sans-serif',
+            'marginBottom': '20px'
         }),
 
-        # Output text
-        html.Div(id='newbie-output', style={'marginTop': '30px', 'fontFamily': 'Helvetica'}),
+        html.Label("Flat Type", style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
+        dcc.Dropdown(
+            id='newbie-flat-type',
+            options=[],
+            placeholder='Enter flat type',
+            style=common_dropdown_style
+        ),
 
-        # 🔍 Map
+        html.Label("Floor Level", style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
+        dcc.Dropdown(
+            id='newbie-floor-level',
+            options=[
+                {'label': 'Low', 'value': 'Low'},
+                {'label': 'Medium', 'value': 'Medium'},
+                {'label': 'High', 'value': 'High'}
+            ],
+            placeholder='Enter floor level',
+            style=common_dropdown_style
+        ),
+
+        html.H4("You may also add additional filters for your search!", style={
+            'fontFamily': 'Inter, sans-serif', 'marginBottom': '30px'
+        }),
         html.Div([
-            dl.Map(
-                id="newbie-map",
-                center=[1.3521, 103.8198],  # default center (static)
-                zoom=11,                    # default zoom (static)
-                children=[
-                    dl.TileLayer(),
-                    dl.Marker(id="newbie-marker", position=[1.3521, 103.8198], children=[
-                        dl.Popup(id="newbie-popup", children="Selected Location")
-                    ])
-                ],
-                style={'width': '100%', 'height': '400px', 'marginTop': '20px'}
-            )
-        ], style={'marginTop': '40px'})
-    ], style={'width': '50%', 'margin': '0 auto', 'padding': '40px', 'fontFamily': 'Helvetica'})
-])
+                html.Label('Minimum Remaining Lease (Year)', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
+                html.Div('0-99', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'})
+                    ], style={'display':'flex','justifyContent':'space-between','marginBottom':'10px'}),
+        dcc.Slider(
+            id='newbie-lease',
+            min=0,
+            max=99,
+            step=1,
+            tooltip={'placement':'bottom'}, className='my-slider',
+            marks={0: '0', 99: '99 years'},
+        ),
+        html.P("Select how long the minimum remaining lease you want your unit to be", style={
+            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Inter, sans-serif',
+            'marginBottom': '30px'
+        }),
+        html.Div([
+                html.Label('Distance to nearest MRT (km)', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
+                html.Div('0-2.5', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'})
+                    ], style={'display':'flex','justifyContent':'space-between','marginBottom':'10px'}),
+        dcc.Slider(
+            id='newbie-dist-mrt',
+            min=0,
+            max=2.5,
+            step=0.1,
+            tooltip={'placement':'bottom'}, className='my-slider',
+            marks={0: '0', 2.5: '2.5km'},
+        ),
+        html.P("Select a maximum distance from the nearest available MRT", style={
+            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Inter, sans-serif',
+            'marginBottom': '30px'
+        }),
+
+        html.Div([
+                html.Label('Distance to nearest Primary School (km)', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
+                html.Div('0-2.5', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'})
+                    ], style={'display':'flex','justifyContent':'space-between','marginBottom':'10px'}),
+
+        dcc.Slider(
+            id='newbie-dist-school',
+            min=0,
+            max=2.5,
+            step=0.1,
+            tooltip={'placement':'bottom'}, className='my-slider',
+            marks={0: '0', 2.5: '2.5km'},
+        ),
+        html.P("Select a maximum distance from the nearest available school", style={
+            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Inter, sans-serif',
+            'marginBottom': '30px'
+        }),
+
+        html.Div([
+            html.Button("See Units Now", id="newbie-submit", n_clicks=0, style={
+                    'padding': '10px 20px',
+                    'fontSize': '16px',
+                    'cursor': 'pointer',
+                    'backgroundColor': '#7F0019',
+                    'color': 'white',
+                    'fontFamily': 'Inter, sans-serif',
+                    'border': 'none',
+                    'borderRadius': '8px'
+                })
+        ], style={"textAlign": "center", "marginTop": "20px"}),
+
+        html.Div(id='newbie-output', style={'marginTop': '30px', 'fontFamily': 'Inter, sans-serif'})
+    ], style={'width': '50%', 'margin': '0 auto', 'padding': '40px', 'fontFamily': 'Inter, sans-serif'})
+],
+    style={
+        'backgroundColor': 'white',
+        'minHeight': '100vh',
+        'padding': '40px'
+    })
+
+# CALLBACKS
 
 @callback(
-    Output('newbie-output', 'children'),
-    Input('newbie-submit', 'n_clicks'),
-    State('newbie-postal-dropdown', 'value'),
-    State('newbie-town-dropdown', 'value'),
-    prevent_initial_call=True
+    Output('newbie-flat-type', 'options'),
+    Input('newbie-town-dropdown', 'value')
 )
-def display_newbie_response(n_clicks, postal_code, town):
-    if n_clicks > 0:
-        if postal_code and not town:
-            return html.Div(f"You've entered Postal Code: {postal_code}. We'll search properties around this area!")
-        elif town and not postal_code:
-            return html.Div(f"You've selected the town: {town}. We'll help you find the best listings there!")
-        elif town and postal_code:
-            # Ensure type consistency for matching
-            match = hdb_df[hdb_df['postal_code'].astype(str) == str(postal_code)]
-            if not match.empty:
-                block = str(match.iloc[0]['block']).strip()
-                street = match.iloc[0]['street_name'].strip().title()
-                return html.Div(f"You have entered {block} {street}, {town.title()} {postal_code}. We will search previous sales at this given address.")
-            else:
-                return html.Div(f"You entered Postal Code: {postal_code} and selected {town}, but we couldn't find the address in our database.")
-        else:
-            return html.Div("Please either select a postal code or a town.", style={'color': 'red'})
-
-@callback(
-    Output('newbie-postal-dropdown', 'options'),
-    Input('newbie-town-dropdown', 'value'),
-    prevent_initial_call=True
-)
-def update_postal_options(selected_town):
-    if selected_town and selected_town in town_postal_map:
-        raw_postals = town_postal_map[selected_town]
-        # Clean & deduplicate
-        clean_postals = {int(p) for p in raw_postals if pd.notna(p) and str(p).isdigit()}
-        sorted_postals = sorted(clean_postals)
-        return [{'label': str(p), 'value': str(p)} for p in sorted_postals]
-    return []
-
-@callback(
-    Output('newbie-marker', 'position'),
-    Output('newbie-popup', 'children'),
-    Input('newbie-submit', 'n_clicks'),
-    State('newbie-postal-dropdown', 'value'),
-    State('newbie-town-dropdown', 'value'),
-    prevent_initial_call=True
-)
-def update_map_marker_with_popup(n_clicks, postal_code, town):
-    if n_clicks > 0 and postal_code:
-        postal_str = str(postal_code)
-        match = hdb_df[hdb_df['postal_code'] == postal_str]
-        if not match.empty:
-            lat = match.iloc[0]['latitude']
-            lon = match.iloc[0]['longitude']
-            block = str(match.iloc[0]['block']).strip()
-            street = match.iloc[0]['street_name'].strip().title()
-            address = f"{block} {street}, {town.title()} {postal_code}"
-            return [lat, lon], address
-    return [1.3521, 103.8198], "Selected Location"
-
-@callback(
-    Output('expert-flat-type', 'options'),
-    Input('newbie-postal-dropdown', 'value'),
-    prevent_initial_call=True
-)
-def update_flat_type_options(postal_code):
-    if not postal_code:
+def update_flat_type_options(town):
+    if not town:
         return []
-    # Filter the dataframe for the selected postal code
-    filtered = hdb_df[hdb_df['postal_code'].astype(str) == str(postal_code)]
-    if filtered.empty:
-        return []
-    # Define the flat type columns you're interested in
+
+    filtered = hdb_df[hdb_df['town'] == town]
     flat_type_cols = [
         'flat_type_1 ROOM', 'flat_type_2 ROOM', 'flat_type_3 ROOM',
         'flat_type_4 ROOM', 'flat_type_5 ROOM',
         'flat_type_EXECUTIVE', 'flat_type_MULTI-GENERATION'
     ]
-    # Sum across all rows for each flat type column
+
     type_counts = filtered[flat_type_cols].sum()
-    # Only include flat types that have value > 0
-    available_types = [
+
+    return [
         {'label': col.replace('flat_type_', '').replace('_', ' ').title(), 'value': col.replace('flat_type_', '')}
         for col, val in type_counts.items() if val > 0
     ]
-    return available_types
+
 
 @callback(
-    Output('expert-floor-level', 'options'),
-    Input('newbie-postal-dropdown', 'value'),
-    Input('expert-flat-type', 'value'),
+    Output('user-filter-store', 'data'),
+    Output('url', 'pathname'),
+    Input('newbie-submit', 'n_clicks'),
+    State('newbie-town-dropdown', 'value'),
+    State('newbie-flat-type', 'value'),
+    State('newbie-floor-level', 'value'),
+    State('newbie-lease', 'value'),
+    State('newbie-dist-mrt', 'value'),
+    State('newbie-dist-school', 'value'),
     prevent_initial_call=True
 )
-def update_floor_level_options(postal_code, flat_type):
-    if not postal_code or not flat_type:
-        return []
-    flat_col = f"flat_type_{flat_type.upper()}"  # e.g. 'flat_type_3 ROOM'
-    # Filter rows matching postal code and flat type
-    filtered = hdb_df[
-        (hdb_df['postal_code'].astype(str) == str(postal_code)) &
-        (hdb_df[flat_col] == 1)
-    ]
-    if filtered.empty or 'storey_range' not in filtered.columns:
-        return []
-    # Get unique storey ranges (like '01 TO 03', etc.)
-    ranges = filtered['storey_range'].dropna().unique()
-    ranges_sorted = sorted(ranges)  # Optional: sort the ranges alphabetically
-    return [{'label': r, 'value': r} for r in ranges_sorted]
+def save_inputs_and_go(n_clicks, town, flat_type, floor_level, lease, dist_mrt, dist_school):
+    print("🧪 Debug Info:")
+    print("Town:", town)
+    print("Flat Type:", flat_type)
+    print("Floor Level:", floor_level)
+    print("Remaining Lease:", lease)
+    print("Max Distance to MRT:", dist_mrt)
+    print("Max Distance to School:", dist_school)
+
+    if not town or not flat_type or not floor_level:
+        return dash.no_update, dash.no_update
+
+    filter_data = {
+        'town': town,
+        'flat_type': flat_type,
+        'floor_level': floor_level
+    }
+
+    if lease is not None:
+        filter_data['remaining_lease'] = lease
+    if dist_mrt is not None:
+        filter_data['max_dist_mrt'] = dist_mrt
+    if dist_school is not None:
+        filter_data['max_dist_school'] = dist_school
+
+    print("✅ Final filter_data:", filter_data)
+    return filter_data, "/output-general"

@@ -1,0 +1,13 @@
+dash
+dash-leaflet
+pandas
+numpy
+scikit-learn
+joblib
+geopy
+requests
+python-dotenv
+selenium
+beautifulsoup4
+tqdm
+xgboost

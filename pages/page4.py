@@ -1,48 +1,342 @@
 import dash
-from dash import html, dcc, Input, Output, callback, register_page
+from dash import html, dcc, Input, Output, State, callback, register_page, ctx
+from dash.exceptions import PreventUpdate
+import dash_table
+import dash_leaflet as dl
 import joblib
-import xgboost as xgb
+import pandas as pd
 from models.model_tuning import conformal_predict
+from functions.get_transactions import get_transactions, get_block_transactions
+from functions.input_for_model import get_all_nearest_amenities  # assuming it's in functions
 
-# Register page 4 for proper routing
 register_page(__name__, path="/page-4")
 
-# Load the saved model package
 model_package = joblib.load("models/final_model.pkl")
 model = model_package['model']
 q_value = model_package['q_value']
 
-# Default input vector (in case stored data is not available)
-default_input = [70, 0.415218792367851, 8.0, 1.0811219644208, 60, 9.76408651954306, 0, 0, 1, 0, 0, 0, 0]
-
 layout = html.Div([
-    html.H2("Fair Price Prediction"),
-    html.P("This page was reached via redirect from the input page."),
-    html.Button("Predict", id="predict-button", n_clicks=0, style={"margin-top": "20px"}),
-    html.Div(id="prediction-output", style={"margin-top": "20px", "font-weight": "bold"})
-])
+    html.Div(dcc.Link("< Back to Selection", href="/input-specific-dummy", style={
+        'fontFamily': 'Inter, sans-serif', 'fontSize': '14px',
+        'color': 'black', 'textDecoration': 'none'}), style={'margin': '20px'}),
+
+    html.Div([
+        html.Div(id="prediction-title", style={"fontSize": "20px", "fontWeight": "bold",
+                                               "fontFamily": "Inter, sans-serif", "marginBottom": "10px"}),
+        html.Div(id="price-section", style={"marginBottom": "30px", "fontFamily": "Inter, sans-serif"})
+    ], style={"maxWidth": "1000px", "margin": "0 auto", "textAlign": "left"}),
+
+    # Price Trends Section
+    html.Div([
+        html.H4("Price trends for this property", style={"fontFamily": "Inter, sans-serif", "fontSize": '18px'}),
+        html.P(id="price-trend-text", style={"fontFamily": "Inter, sans-serif"}),
+        dcc.RadioItems(id='price-trend-toggle',
+            options=[{'label': 'Within 1km', 'value': '1km'}, {'label': 'Your block', 'value': 'block'}],
+            value='1km', inline=True, className='mode-toggle-container',
+            labelClassName='mode-toggle-label', inputClassName='mode-toggle-input'),
+        html.Div([
+            html.Div([
+                html.Div([
+                    dcc.Graph(id="price-bar-chart", config={'displayModeBar': False}, style={"height": "100%"})
+                ], style={"border": "1px solid lightgray", "padding": "20px 20px 30px 20px",
+                          "borderRadius": "10px", "backgroundColor": "white", "width": "100%", "height": "100%"})
+            ], style={"flex": "7.5", "height": "375px", "display": "flex"}),
+
+            html.Div([
+                html.Div(id="summary-stats", style={"border": "1px solid lightgray", "padding": "20px",
+                                                    "borderRadius": "10px", "fontFamily": "Inter, sans-serif",
+                                                    "backgroundColor": "#fff", "flex": "1", "height": "100%"})
+            ], style={"flex": "2.5", "height": "375px", "display": "flex"})
+        ], style={"display": "flex", "maxWidth": "1000px", "margin": "0 auto",
+                  "gap": "20px", "marginTop": "20px"})
+    ], style={"margin": "0 auto", "maxWidth": "1000px"}),
+
+    # Recent Transactions Table
+    html.Div([
+        html.H4("Recent Transactions", style={"fontFamily": "Inter, sans-serif", "fontSize": '18px'}),
+        html.Div(id='recent-transactions-label', style={"fontFamily": "Inter, sans-serif"}),
+        dash_table.DataTable(
+            id='transaction-table',
+            columns=[
+                {'name': 'Month', 'id': 'month'},
+                {'name': 'Address', 'id': 'address'},
+                {'name': 'Storey', 'id': 'storey_range'},
+                {'name': 'Price', 'id': 'adjusted_resale_price'}
+            ],
+            style_cell={
+                'fontFamily': 'Inter, sans-serif',
+                'textAlign': 'left',
+                'padding': '16px',
+                'border': 'none',
+                'fontSize': '15px',
+                'backgroundColor': '#f9f9f9',
+            },
+            style_header={
+                'backgroundColor': '#ffffff',
+                'fontWeight': 'bold',
+                'borderBottom': '2px solid #dddddd',
+                'fontSize': '16px',
+            },
+            style_table={
+                'width': '100%',
+                'marginTop': '10px',
+                'borderCollapse': 'separate',
+                'borderSpacing': '0 8px'
+            },
+            cell_selectable=True,
+        )
+    ], style={"maxWidth": "1000px", "margin": "0 auto", "marginTop": "40px"}),
+
+    # Property details (with SVG icons + map beside)
+    html.Div([
+
+        # Combine header and amenities into a single left column
+        html.Div([  
+            html.H4("Property details", style={
+                "fontFamily": "Inter, sans-serif",
+                "fontSize": '18px',
+                "marginBottom": "16px",
+                "marginTop": '50px'
+            }),
+            html.Div(id='amenities-list', style={
+                "fontFamily": "Inter, sans-serif",
+                "flex": "1",
+                "overflow": "hidden",
+                "display": "flex",
+                "flexDirection": "column",
+                "justifyContent": "space-between",
+            })
+        ], style={
+            "flex": "1",
+            "height": "340px",  # match the map height
+            "display": "flex",
+            "flexDirection": "column",
+            "justifyContent": "space-between"
+        }),
+
+        # Map
+        dl.Map(id='selected-map',
+            center=[1.3521, 103.8198],
+            zoom=16,
+            children=[
+                dl.TileLayer(
+                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                    attribution='&copy; <a href="https://carto.com/">CartoDB</a>'
+                ),
+                dl.LayerGroup(id='selected-marker')
+            ],
+            style={
+                "width": "100%",
+                "maxWidth": "420px",
+                "height": "315px",
+                "borderRadius": "12px",
+                "boxShadow": "0px 0px 12px rgba(0,0,0,0.15)",
+                "border": "1px solid #ddd",
+                'marginTop': '50px'
+            }
+        )
+
+    ], style={
+        "display": "flex",
+        "marginTop": "60px",
+        "alignItems": "flex-start",
+        "gap": "40px",
+        "maxWidth": "1000px",
+        "margin": "0 auto",
+        "paddingBottom": "40px"
+    })
+], style={"backgroundColor": "white", "padding": "20px"})
+
 
 @callback(
-    Output("prediction-output", "children"),
-    Input("predict-button", "n_clicks"),
-    # We grab the stored manual data here:
-    Input('manual-store', 'data')
+    Output("prediction-title", "children"),
+    Output("price-section", "children"),
+    Output("price-trend-text", "children"),
+    Output("recent-transactions-label", "children"),
+    Input("manual-store", "data"),
+    Input("guru-store", "data")
 )
-def predict_fair_price(n_clicks, manual_data):
-    if n_clicks:
+def display_prediction(manual_data, guru_data):
+    data = manual_data if manual_data else guru_data
+
+    if data:
         try:
-            # If manual data is available, use that as the input vector;
-            # otherwise, fallback to default_input.
-            if manual_data and isinstance(manual_data, list) and len(manual_data) > 0:
-                input_vector = manual_data[0]  # If get_information returns a list with one row
-            else:
-                input_vector = default_input
-            # Call your conformal_predict function
+            input_vector = data.get("input_vector", [])[0]
+            flat_type = data.get("flat_type_input", "[flat type]")
+            address = data.get("address", "[address]")
+
             y_pred, y_lower, y_upper = conformal_predict(model, input_vector, q_value)
-            return html.Div([
-                html.P(f"Predicted Price: {y_pred[0]:.2f}"),
-                html.P(f"90% Confidence Interval: [{y_lower[0]:.2f}, {y_upper[0]:.2f}]")
-            ])
+
+            return (
+                f"A {flat_type} at {address} is predicted to be",
+                html.Div([
+                    html.H1(f"${int(y_pred[0]):,}", style={"color": "#7F0019", "font-size": "48px"}),
+                    html.P(f"With a plausible range of ${int(y_lower[0]):,} to ${int(y_upper[0]):,}",
+                           style={"font-size": "18px"})
+                ]),
+                f"Based on other {flat_type} sales",
+                f"Based on the closest {flat_type} HDB to your selection within the last 2 years"
+            )
         except Exception as e:
-            return f"Error in prediction: {e}"
-    return ""
+            return "Error occurred", html.Div(f"Prediction failed: {e}"), "", ""
+
+    return "", "", "", ""
+
+stored_records = {}
+@callback(
+    Output("price-bar-chart", "figure"),
+    Output("summary-stats", "children"),
+    Output("transaction-table", "data"),
+    Input("price-trend-toggle", "value"),
+    Input("manual-store", "data"),
+    Input("guru-store", "data")
+)
+def update_chart(toggle_value, manual_data, guru_data):
+    data = manual_data if manual_data else guru_data
+    if not data:
+        raise PreventUpdate
+
+    postal = data.get("postal")
+    flat_type = data.get("flat_type")
+
+    if toggle_value == "1km":
+        top3, recent_year, full = get_transactions(postal, flat_type)
+    else:
+        top3, recent_year, full = get_block_transactions(postal, flat_type)
+
+    stored_records['full'] = full.to_dict('records')  # Used for row click
+    bar_df = recent_year.copy()
+    bar_df['quarter'] = pd.to_datetime(bar_df['month']).dt.to_period('Q').astype(str)
+    chart_data = bar_df.groupby('quarter')['adjusted_resale_price'].mean().reset_index()
+
+    fig = {
+        "data": [{
+            "x": chart_data['quarter'],
+            "y": chart_data['adjusted_resale_price'],
+            "type": "bar",
+            "marker": {"color": "#7F0019"}
+        }],
+        "layout": {
+            "title": None,
+            "autosize": True,
+            "height": 350,
+            "margin": {"l": 40, "r": 10, "t": 10, "b": 40},
+            "xaxis": {"title": None},
+            "yaxis": {"title": None},
+            "paper_bgcolor": "white",
+            "plot_bgcolor": "white"
+        }
+    }
+
+    max_row = recent_year.loc[recent_year['adjusted_resale_price'].idxmax()]
+    min_row = recent_year.loc[recent_year['adjusted_resale_price'].idxmin()]
+    avg_price = round(recent_year['adjusted_resale_price'].mean())
+
+    stats_html = html.Div([
+        html.H4("Within the last year", style={"fontWeight": "700", "marginBottom": "20px"}),
+        html.P("Average Price", style={"fontStyle": "italic", "marginBottom": "0"}),
+        html.H3(f"${avg_price:,}", style={"fontWeight": "700", "marginTop": "5px"}),
+        html.P("Highest Sold", style={"marginBottom": "0", "marginTop": "20px"}),
+        html.Div([html.H4(f"${int(max_row['adjusted_resale_price']):,}",
+                          style={"display": "inline-block", "marginRight": "8px"}),
+                  html.Span(pd.to_datetime(max_row['month']).strftime("%b %Y"), style={"color": "#888"})]),
+        html.P("Lowest Sold", style={"marginBottom": "0", "marginTop": "20px"}),
+        html.Div([html.H4(f"${int(min_row['adjusted_resale_price']):,}",
+                          style={"display": "inline-block", "marginRight": "8px"}),
+                  html.Span(pd.to_datetime(min_row['month']).strftime("%b %Y"), style={"color": "#888"})])
+    ])
+
+    return fig, stats_html, top3.to_dict('records')
+
+@callback(
+    Output("amenities-list", "children"),
+    Output("selected-marker", "children"),
+    Output("selected-map", "center"),
+    Input("transaction-table", "active_cell")
+)
+def update_amenities_and_map(active_cell):
+    if not active_cell:
+        raise PreventUpdate
+
+    row_idx = active_cell['row']
+    full = stored_records.get('full', [])
+
+    if not full or row_idx >= len(full):
+        raise PreventUpdate
+
+    full_row = full[row_idx]
+    lat = full_row.get('latitude')
+    lon = full_row.get('longitude')
+
+    if lat is None or lon is None or pd.isna(lat) or pd.isna(lon):
+        return [html.Div("No geolocation data available for this transaction.")], [], [1.3521, 103.8198]
+
+    coord_row = {
+        "latitude": float(lat),
+        "longitude": float(lon)
+    }
+
+    nearest = get_all_nearest_amenities(coord_row)
+
+    def make_amenity(icon, title, value):
+        return html.Div([
+            html.Img(src=f"/assets/{icon}", style={
+                "width": "45px", "height": "45px", "marginRight": "12px", "flexShrink": "0", "marginTop": "2px"
+            }),
+            html.Div([
+                html.Div(title, style={
+                    "fontWeight": "600", "fontSize": "15px", "marginBottom": "2px"
+                }),
+                html.Div(value, style={
+                    "fontSize": "14px", "color": "#333"
+                })
+            ])
+        ], style={
+            "display": "flex", "alignItems": "flex-start", "marginBottom": "20px"
+        })
+
+    amenities = [
+        make_amenity("mrt.svg", "Nearest MRT",
+                     f"{nearest['nearest_mrt']['name']}, {nearest['nearest_mrt']['distance_km']} km"),
+        make_amenity("edu.svg", "Nearest Primary Schools (within 2km)",
+                     f"{nearest['nearest_school']['name']}, {nearest['nearest_school']['distance_km']} km"),
+        make_amenity("utensil.svg", "Nearest Hawker Center",
+                     f"{nearest['nearest_foodcourt']['name']}, {nearest['nearest_foodcourt']['distance_km']} km"),
+        make_amenity("city.svg", "Distance to Central Business District",
+                     f"{nearest['distance_to_cbd']} km")
+    ]
+
+    marker = dl.Marker(position=[lat, lon], children=dl.Tooltip("🏠 Selected Property"))
+
+    return amenities, [marker], [lat, lon]
+
+
+@callback(
+    Output('transaction-table', 'style_data_conditional'),
+    Input('transaction-table', 'active_cell')
+)
+def style_active_row(active_cell):
+    # Base zebra-striping for all rows
+    style = [
+        {
+            'if': {'row_index': 'odd'},
+            'backgroundColor': '#fcfcfc',
+        },
+        {
+            'if': {'row_index': 'even'},
+            'backgroundColor': '#f9f9f9',
+        }
+    ]
+
+    # Add selected row style
+    if active_cell:
+        row_idx = active_cell['row']
+        style.append({
+            'if': {'row_index': row_idx},
+            'backgroundColor': '#7F0019',
+            'color': 'white',
+            'borderTop': '2px solid #dddddd'
+        })
+
+    return style
+

@@ -1,0 +1,11 @@
+*
+
+# But keep these files and folders:
+!Procfile
+!requirements.txt
+!app.py
+!assets/
+!dataset/
+!functions/
+!models/
+!pages/
