@@ -31,8 +31,16 @@
     background-color: transparent !important
 }
 
+.my-slider .rc-slider-dot-active {
+    display: none !important;
+}
+
 .my-slider [class*="rc-slider-step"] {
     background-color: none !important; 
+}
+
+.my-slider .rc-slider-step {
+    display: none !important;
 }
 
 .my-slider {
