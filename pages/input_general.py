@@ -78,6 +78,12 @@ layout = html.Div(children =[
             placeholder="Enter a town",
             style=common_dropdown_style
         ),
+        dcc.Dropdown(
+            id='newbie-town-dropdown_2',
+            options=[{'label': town.title(), 'value': town} for town in towns],
+            placeholder="Enter a town",
+            style=common_dropdown_style
+        ),
         html.P("Looking to compare towns? You may select up to 2 to view!", style={
             'fontSize': '13px', 'color': '#777', 'fontFamily': 'Inter, sans-serif',
             'marginBottom': '20px'
@@ -183,25 +189,33 @@ layout = html.Div(children =[
 
 @callback(
     Output('newbie-flat-type', 'options'),
-    Input('newbie-town-dropdown', 'value')
+    Input('newbie-town-dropdown', 'value'),
+    Input('newbie-town-dropdown_2', 'value')
 )
-def update_flat_type_options(town):
-    if not town:
+def update_flat_type_options(town1, town2):
+    if not town1 or not town2:
         return []
 
-    filtered = hdb_df[hdb_df['town'] == town]
+    filtered1 = hdb_df[hdb_df['town'] == town1]
+    filtered2 = hdb_df[hdb_df['town'] == town2]
+
     flat_type_cols = [
         'flat_type_1 ROOM', 'flat_type_2 ROOM', 'flat_type_3 ROOM',
         'flat_type_4 ROOM', 'flat_type_5 ROOM',
         'flat_type_EXECUTIVE', 'flat_type_MULTI-GENERATION'
     ]
 
-    type_counts = filtered[flat_type_cols].sum()
+    counts1 = filtered1[flat_type_cols].sum()
+    counts2 = filtered2[flat_type_cols].sum()
+
+    # Only keep flat types that exist in both towns
+    common_cols = counts1[(counts1 > 0) & (counts2 > 0)].index.tolist()
 
     return [
         {'label': col.replace('flat_type_', '').replace('_', ' ').title(), 'value': col.replace('flat_type_', '')}
-        for col, val in type_counts.items() if val > 0
+        for col in common_cols
     ]
+
 
 
 @callback(
@@ -209,6 +223,7 @@ def update_flat_type_options(town):
     Output('url', 'pathname'),
     Input('newbie-submit', 'n_clicks'),
     State('newbie-town-dropdown', 'value'),
+    State('newbie-town-dropdown_2', 'value'),
     State('newbie-flat-type', 'value'),
     State('newbie-floor-level', 'value'),
     State('newbie-lease', 'value'),
@@ -216,20 +231,14 @@ def update_flat_type_options(town):
     State('newbie-dist-school', 'value'),
     prevent_initial_call=True
 )
-def save_inputs_and_go(n_clicks, town, flat_type, floor_level, lease, dist_mrt, dist_school):
-    print("🧪 Debug Info:")
-    print("Town:", town)
-    print("Flat Type:", flat_type)
-    print("Floor Level:", floor_level)
-    print("Remaining Lease:", lease)
-    print("Max Distance to MRT:", dist_mrt)
-    print("Max Distance to School:", dist_school)
+def save_inputs_and_go(n_clicks, town1, town2, flat_type, floor_level, lease, dist_mrt, dist_school):
 
-    if not town or not flat_type or not floor_level:
+    if not town1 or not town2 or not flat_type or not floor_level:
         return dash.no_update, dash.no_update
 
     filter_data = {
-        'town': town,
+        'town1': town1,
+        'town2': town2,
         'flat_type': flat_type,
         'floor_level': floor_level
     }
@@ -241,5 +250,4 @@ def save_inputs_and_go(n_clicks, town, flat_type, floor_level, lease, dist_mrt, 
     if dist_school is not None:
         filter_data['max_dist_school'] = dist_school
 
-    print("✅ Final filter_data:", filter_data)
     return filter_data, "/output-general"
