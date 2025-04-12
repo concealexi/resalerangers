@@ -19,32 +19,46 @@ options = ['flat_type_1 ROOM', 'flat_type_2 ROOM',
 def get_all_nearest_amenities(coord_row):
     hdb_coords = (coord_row['latitude'], coord_row['longitude'])
 
-    #run for each amenity type
-    def nearest_amenity(amenity_df, name, lat = 'latitude', long = 'longitude'):
+    # Find nearest amenity and return name, distance, and coordinates
+    def nearest_amenity(amenity_df, name_col, lat_col='latitude', lon_col='longitude'):
         min_dist = float('inf')
         nearest_name = None
+        nearest_coords = (None, None)
         for row in amenity_df.itertuples(index=False):
             try:
-                coords = (getattr(row, lat), getattr(row, long))
+                coords = (getattr(row, lat_col), getattr(row, lon_col))
                 dist = geodesic(hdb_coords, coords).km
                 if dist < min_dist:
                     min_dist = dist
-                    nearest_name = getattr(row, name)
+                    nearest_name = getattr(row, name_col)
+                    nearest_coords = coords
             except:
                 continue
-        return nearest_name, min_dist
+        return nearest_name, round(min_dist, 2), nearest_coords
 
-    nearest_school, school_dist = nearest_amenity(schools, name = 'school')
-    nearest_mrt, mrt_dist = nearest_amenity(mrt_stations, name = 'station_name')
-    nearest_food, food_dist = nearest_amenity(hawkercentres, name = 'hc_name')
+    nearest_school, school_dist, school_coords = nearest_amenity(schools, 'school')
+    nearest_mrt, mrt_dist, mrt_coords = nearest_amenity(mrt_stations, 'station_name')
+    nearest_food, food_dist, food_coords = nearest_amenity(hawkercentres, 'hc_name')
 
-    cbd_dist = geodesic(hdb_coords, cbd_coords).km
+    cbd_dist = round(geodesic(hdb_coords, cbd_coords).km, 2)
 
     return {
-        'nearest_school': {'name': nearest_school, 'distance_km': round(school_dist, 2)},
-        'nearest_mrt': {'name': nearest_mrt, 'distance_km': round(mrt_dist, 2)},
-        'nearest_foodcourt': {'name': nearest_food, 'distance_km': round(food_dist, 2)},
-        'distance_to_cbd': round(cbd_dist, 2)
+        'nearest_school': {
+            'name': nearest_school,
+            'distance_km': school_dist,
+            'coords': school_coords
+        },
+        'nearest_mrt': {
+            'name': nearest_mrt,
+            'distance_km': mrt_dist,
+            'coords': mrt_coords
+        },
+        'nearest_foodcourt': {
+            'name': nearest_food,
+            'distance_km': food_dist,
+            'coords': food_coords
+        },
+        'distance_to_cbd': cbd_dist
     }
 
 
