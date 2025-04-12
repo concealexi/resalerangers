@@ -1,7 +1,7 @@
 import dash
 from dash import html, dcc, register_page, callback, Output, Input, State
 import pandas as pd
-import dash_leaflet as dl
+# import dash_leaflet as dl
 
 # Load and merge data
 hdb_df = pd.read_csv("dataset/hdb_final_dataset.csv")
