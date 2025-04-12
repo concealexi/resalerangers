@@ -63,7 +63,7 @@ pinpoint_icon = {
 
 MRT_icon = {
     "iconUrl": "/assets/mrt.svg",
-    "iconSize": [30, 60]
+    "iconSize": [20, 40]
 }
 
 sch_icon = {
@@ -73,7 +73,7 @@ sch_icon = {
 
 hawker_icon = {
     "iconUrl": "/assets/utensil.svg",
-    "iconSize": [30, 60]
+    "iconSize": [25, 50]
 }
 
 layout = html.Div([
@@ -552,14 +552,19 @@ def update_quarterly_chart(filter_data, summary_toggle):
             return pd.DataFrame({
                 'Quarter': quarters,
                 'adjusted_resale_price': [0] * len(quarters),
+                'units_sold': [0] * len(quarters),
                 'Town': [town_label] * len(quarters)
             }), None
         else:
-            q_avg = df.groupby('Quarter')['adjusted_resale_price'].mean().fillna(0).round().reset_index()
+            q_avg = df.groupby('Quarter').agg(
+                adjusted_resale_price=('adjusted_resale_price', 'mean'),
+                units_sold=('adjusted_resale_price', 'count')
+            ).fillna(0).round().reset_index()
             q_avg['Quarter'] = pd.Categorical(q_avg['Quarter'], quarters, ordered=True)
             q_avg = q_avg.sort_values('Quarter')
             q_avg['Town'] = town_label
             return q_avg, df
+
 
     q_avg1, df1_valid = compute_q_avg(df1, town.title())
     q_avg2, df2_valid = compute_q_avg(df2, town2.title())
@@ -581,7 +586,16 @@ def update_quarterly_chart(filter_data, summary_toggle):
         width=700,
         height=400
     )
-    fig.update_traces(width=0.3)
+
+    fig.update_traces(
+    width=0.3,
+    customdata=combined_avg[['units_sold']],
+    hovertemplate=(
+        "In %{x}<br>" +
+        "%{customdata[0]} units sold<br>" +
+        "Average: $%{y:,.0f}<extra></extra>"
+    ))
+
     fig.update_layout(
         margin=dict(l=10, r=10, t=20, b=20),
         legend=dict(
@@ -596,7 +610,13 @@ def update_quarterly_chart(filter_data, summary_toggle):
         xaxis=dict(title="", showgrid=False),
         plot_bgcolor="#ffffff",
         paper_bgcolor="#ffffff",
-        title=None
+        title=None,
+        hoverlabel=dict(
+            font=dict(family="Inter, sans-serif", size=14, color="#333"),
+            bgcolor="white",
+            bordercolor="#ddd",
+            align="left"
+        )
     )
 
     def build_summary(df, town_name):
@@ -711,9 +731,14 @@ def update_table(filter_data, pathname):
 
 
     summary_df['Price Range'] = summary_df.apply(
-        lambda row: f"${int(row['min_price']):,} - ${int(row['max_price']):,}",
-        axis=1
+    lambda row: (
+        f"${int(row['min_price']):,} - ${int(row['max_price']):,}"
+        if pd.notna(row['min_price']) and pd.notna(row['max_price'])
+        else "N/A"
+    ),
+    axis=1
     )
+
 
     summary_df = summary_df.rename(columns={
         'address': 'Address',
@@ -723,7 +748,7 @@ def update_table(filter_data, pathname):
     summary_df = summary_df.sort_values(by='Units Sold', ascending=False).head(10)
 
     if summary_df.empty:
-        return html.Div("No results."), None
+        return html.Div("No results."), None, None
 
     return dash_table.DataTable(
         id='transaction-table-town1',
@@ -818,9 +843,14 @@ def update_table_town2(filter_data, pathname):
     ).reset_index()
 
     summary_df['Price Range'] = summary_df.apply(
-        lambda row: f"${int(row['min_price']):,} - ${int(row['max_price']):,}",
-        axis=1
+    lambda row: (
+        f"${int(row['min_price']):,} - ${int(row['max_price']):,}"
+        if pd.notna(row['min_price']) and pd.notna(row['max_price'])
+        else "N/A"
+    ),
+    axis=1
     )
+
 
     summary_df = summary_df.rename(columns={
         'address': 'Address',
@@ -831,7 +861,7 @@ def update_table_town2(filter_data, pathname):
 
 
     if summary_df.empty:
-        return html.Div("No results."), None
+        return html.Div("No results."), None, None
 
     return dash_table.DataTable(
         id='transaction-table-town2',
