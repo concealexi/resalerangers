@@ -6,6 +6,7 @@ import dash_leaflet as dl
 import dash_leaflet.express as dlx
 import plotly.express as px
 from datetime import datetime
+import plotly.graph_objects as go
 
 
 
@@ -575,26 +576,24 @@ def update_quarterly_chart(filter_data, summary_toggle):
         town2.title(): "#e6ab2d"
     }
 
-    fig = px.bar(
-        combined_avg,
-        x='Quarter',
-        y='adjusted_resale_price',
-        color='Town',
-        color_discrete_map=color_map,
-        barmode='group',
-        labels={'adjusted_resale_price': 'Avg Price (SGD)'},
-        width=700,
-        height=400
-    )
+    fig = go.Figure()
 
-    fig.update_traces(
-    width=0.3,
-    customdata=combined_avg[['units_sold']],
-    hovertemplate=(
-        "In %{x}<br>" +
-        "%{customdata[0]} units sold<br>" +
-        "Average: $%{y:,.0f}<extra></extra>"
-    ))
+    for town_name in [town.title(), town2.title()]:
+        df_town = combined_avg[combined_avg['Town'] == town_name]
+
+        fig.add_trace(go.Bar(
+            x=df_town['Quarter'],
+            y=df_town['adjusted_resale_price'],
+            name=town_name,
+            marker=dict(color=color_map[town_name]),
+            customdata=df_town[['units_sold']],
+            width=0.3,
+            hovertemplate=(
+                "In %{x}<br>" +
+                "%{customdata[0]} units sold<br>" +
+                "Average: $%{y:,.0f}<extra></extra>"
+            )
+        ))
 
     fig.update_layout(
         margin=dict(l=10, r=10, t=20, b=20),
