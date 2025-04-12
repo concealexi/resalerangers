@@ -167,7 +167,7 @@ def display_prediction(manual_data, guru_data):
             y_pred, y_lower, y_upper = conformal_predict(model, input_vector, q_value)
 
             return (
-                f"A {flat_type} at {address} is predicted to be",
+                f"A {flat_type} HDB at {address} is predicted to be",
                 html.Div([
                     html.H1(f"${int(y_pred[0]):,}", style={"color": "#7F0019", "font-size": "48px"}),
                     html.P(f"With a plausible range of ${int(y_lower[0]):,} to ${int(y_upper[0]):,}",

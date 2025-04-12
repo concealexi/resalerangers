@@ -215,7 +215,7 @@ def scraper_guru(input_link):
         "floor_area_sqm": floor_area_sqm,
         "latitude": latitude,
         "longitude": longitude,
-        "postal_code": postal_code
+        "postal_code": str(int(postal_code))
     }
 
 
