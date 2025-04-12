@@ -3,6 +3,7 @@ from dash import html, dcc, Input, Output, State, callback, register_page, ctx, 
 from dash.exceptions import PreventUpdate
 import dash_leaflet as dl
 import joblib
+import xgboost as xgb
 import pandas as pd
 from models.model_tuning import conformal_predict
 from functions.get_transactions import get_transactions, get_block_transactions
