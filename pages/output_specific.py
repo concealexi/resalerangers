@@ -3,11 +3,12 @@ from dash import html, dcc, Input, Output, State, callback, register_page, ctx, 
 from dash.exceptions import PreventUpdate
 import dash_leaflet as dl
 import joblib
+import xgboost as xgb
 import pandas as pd
 from models.model_tuning import conformal_predict
 from functions.get_transactions import get_transactions, get_block_transactions
 from functions.input_for_model import get_all_nearest_amenities  # assuming it's in functions
-import xgboost as xgb
+
 register_page(__name__, path="/output-specific")
 
 # model_package = joblib.load("models/final_model.pkl")
@@ -195,6 +196,7 @@ stored_records = {}
     Output("price-bar-chart", "figure"),
     Output("summary-stats", "children"),
     Output("transaction-table", "data"),
+    Output("transaction-table", "active_cell"),  # <-- NEW
     Input("price-trend-toggle", "value"),
     Input("manual-store", "data"),
     Input("guru-store", "data")
@@ -281,7 +283,7 @@ def update_chart(toggle_value, manual_data, guru_data):
         html.Div(pd.to_datetime(min_row['month']).strftime("%b %Y"), style={"color": "#000", "fontSize": "14px"})])
     ])
 
-    return fig, stats_html, top3.to_dict('records')
+    return fig, stats_html, top3.to_dict('records'), {"row": 0, "column": 0, "column_id": "month"}
 
 @callback(
     Output("amenities-list", "children"),
