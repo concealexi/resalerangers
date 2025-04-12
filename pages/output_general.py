@@ -27,168 +27,300 @@ hdb_info['postal_code'] = hdb_info['postal_code'].astype(str).str.zfill(6)
 hdb_df = pd.merge(hdb_df, hdb_info[['postal_code', 'max_floor_lvl']], on='postal_code', how='left')
 hdb_df = hdb_df[hdb_df['max_floor_lvl'].notna()]
 
+town_chip_style = {
+    "padding": "8px 20px",
+    "border": "1.5px solid #7F0019",
+    "borderRadius": "999px",
+    "fontWeight": "600",
+    "fontSize": "16px",
+    "color": "#1A1A1A",
+    "backgroundColor": "white"
+}
+
+icon_style = {
+    "fontSize": "22px",
+    "width": "30px"
+}
+
+label_style = {
+    "fontSize": "16px",
+    "marginLeft": "10px"
+}
+
+row_style = {
+    "display": "flex",
+    "alignItems": "center",
+    "marginBottom": "12px"
+}
 
 layout = html.Div([
-    html.Div([  # ⬅️ NEW outer container starts here
+    dcc.Location(id='url'),
+    dcc.Store(id='map-center-store', storage_type='memory'),
+    html.Div(
+        children=[
+            dcc.Link("< back to start", href="/", style={
+                    'fontFamily': 'Inter, sans-serif',
+                    'fontSize': '14px',
+                    'color': 'black',
+                    'textDecoration': 'none'
+                })
+            ],
+            style={'marginLeft': '20px', 'marginTop': '20px', 'marginBottom': '30px'}
+    ),
+    html.H3("You selected 2 towns", style={
+        'fontFamily': 'Inter, sans-serif', 'textAlign': 'left'
+    }),
 
-        dcc.Location(id='url'),
-        dcc.Store(id='map-center-store', storage_type='memory'),
-
-        html.H2("Your Selected Filters", style={
-            'fontFamily': 'Inter, sans-serif', 'textAlign': 'left'
-        }),
-
-        html.Div(id='filter-summary', style={
-            'width': '80%', 'margin': 'auto', 'marginBottom': '20px'
-        }),
-
-        html.Div(id='bar-chart-section', children=[
-            html.H2("Price trends for properties in the area", style={
-                'textAlign': 'left', 'fontFamily': 'Inter, sans-serif', 'marginTop': '30px'
-            }),
-            html.P(id='bar-chart-subtitle', style={
-                'textAlign': 'left', 'fontFamily': 'Inter, sans-serif',
-                'fontSize': '16px', 'marginBottom': '10px'
-            }),
-            html.Div(id='bar-chart-subtitle', style={
-                'marginBottom': '10px', 'textAlign': 'left',
-                'fontFamily': 'Inter, sans-serif', 'fontSize': '16px'
-            }),
-        ]),
-
-        html.Div([
-            html.H4("Select which summary to view:", style={
-                'fontFamily': 'Inter, sans-serif', 'marginBottom': '20px'
-            }),
-            dcc.RadioItems(
-                id='summary-toggle',
-                options=[],  # populated dynamically via callback
-                value='town1',
-                inline=True,
-                className='mode-toggle-container',
-                labelClassName='mode-toggle-label',
-                inputClassName='mode-toggle-input'
+    html.Div([
+    html.Div([
+            html.Img(
+                src='assets/town.svg',
+                style={
+                    'width': '60px',
+                    'height': '60px',
+                    'marginRight': '12px',
+                    'alignSelf': 'center'
+                }
             )
         ], style={
-            'textAlign': 'left', 'marginTop': '20px',
-            'marginBottom': '20px', 'fontFamily': 'Inter, sans-serif'
+            'display': 'flex',
+            'alignItems': 'center'
         }),
 
         html.Div([
-            html.Div([
-                dcc.Graph(id="quarterly-bar-chart", config={'displayModeBar': False}, style={"height": "100%", "width": "100%"})
-            ], style={
-                "flex": "7",
-                "border": "1px solid lightgray",
-                "padding": "20px",
-                "borderRadius": "10px",
-                "backgroundColor": "white",
-                "height": "425px",
-                "boxSizing": "border-box"
-            }),
-
-            html.Div(id="price-summary-container", style={
-                "flex": "3",
-                "border": "1px solid lightgray",
-                "padding": "20px",
-                "borderRadius": "10px",
-                "fontFamily": "Inter, sans-serif",
-                "backgroundColor": "#fff",
-                "height": "425px",
-                "boxSizing": "border-box"
-            })
-        ], style={
-            "display": "flex",
-            "gap": "20px",
-            "maxWidth": "1000px",
-            "margin": "0 auto",
-            "marginTop": "20px",
-            "alignItems": "stretch"
-        }),
-
-        html.Div([
-            html.H3("📄 Recent Transactions Matching Your Filters", style={
-                'textAlign': 'center',
-                'fontFamily': 'Inter, sans-serif',
-                'marginTop': '40px',
-                'marginBottom': '20px',
+            html.Div(id='town-filter', style={
+                'padding': '8px 20px',
+                'border': '1.5px solid #7F0019',
+                'borderRadius': '999px',
                 'fontWeight': '600',
-                'fontSize': '24px'
-            })
-        ]),
-
-        html.Div([
-            html.Div([
-                html.H4("🏙️ Town 1", style={'textAlign': 'center'}),
-                html.Div(id='filter-table-town1')
-            ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'}),
-            html.Div([
-                html.H4("🏙️ Town 2", style={'textAlign': 'center'}),
-                html.Div(id='filter-table-town2')
-            ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top', 'marginLeft': '4%'})
-    ]),
-
-        dcc.Store(id='selected-postal-store'),
-        dcc.Store(id='selected-postal-store-town2'),
-
-        html.Hr(),
-
-        html.Div([
-            html.Div(id='property-details', style={'flex': '1', 'marginRight': '10px'}),
-            html.Div(id='property-details-town2', style={'flex': '1', 'marginLeft': '10px'})
+                'fontSize': '16px',
+                'color': '#1A1A1A',
+                'backgroundColor': 'white',
+                'marginRight': '10px'
+            }),
+            html.Div(id='town-filter-2', style={
+                'padding': '8px 20px',
+                'border': '1.5px solid #7F0019',
+                'borderRadius': '999px',
+                'fontWeight': '600',
+                'fontSize': '16px',
+                'color': '#1A1A1A',
+                'backgroundColor': 'white'
+            }),
         ], style={
             'display': 'flex',
-            'flexDirection': 'row',
-            'justifyContent': 'center',
-            'alignItems': 'flex-start',
-            'width': '100%',
-            'gap': '20px',
-            'marginTop': '30px'
-        }),
+            'alignItems': 'center'
+        })
+    ], style={
+        'display': 'flex',
+        'alignItems': 'center',
+        'justifyContent': 'left',
+        'gap': '10px',
+        'marginTop': '20px',
+        'marginBottom': '20px',
+        'fontFamily': 'Inter, sans-serif'
+    }),
+
+    html.H3("With features", style={
+    'fontFamily': 'Inter, sans-serif', 'textAlign': 'left', 'marginBottom': '20px'
+}),
+
+    html.Div([
+        html.Div([
+            html.Div([
+                html.Img(src='assets/flattype.svg', style={'width': '20px', 'marginRight': '10px', 'width': '30px',
+                    'height': '30px'}),
+                html.Span([
+                    html.Strong("Flat Type: "),
+                    html.Span(id='feature-filter-flat-type')
+                ], style={"marginLeft": "10px"})
+            ], style=row_style),
+            html.Div([
+                html.Img(src='assets/floorlevel.svg', style={'width': '20px', 'marginRight': '10px', 'width': '30px',
+                    'height': '30px'}),
+                html.Span([
+                    html.Strong("Floor Level: "),
+                    html.Span(id='feature-filter-floor')
+                ], style={"marginLeft": "10px"})
+            ], style=row_style),
+            html.Div([
+                html.Img(src='assets/lease.svg', style={'width': '20px', 'marginRight': '10px', 'width': '30px',
+                    'height': '30px'}),
+                html.Span([
+                    html.Strong("Min Remaining Lease: "),
+                    html.Span(id='feature-filter-lease')
+                ], style={"marginLeft": "10px"})
+            ], style=row_style)
+        ], style={'flex': '1', 'marginBottom': '10px'}),
 
         html.Div([
-            html.H3("🗺️ Map of Nearby Amenities", style={
-                'textAlign': 'center',
-                'marginTop': '40px',
-                'fontFamily': 'Inter, sans-serif'
-            }),
             html.Div([
-                html.Div([
-                    dl.Map(id='amenity-map',
-                           center=[1.287953, 103.851784],
-                           zoom=15,
-                           children=[
-                               dl.TileLayer(url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-                                            attribution='&copy; <a href="https://carto.com/">CartoDB</a>'),
-                               dl.LayerGroup(id='map-markers')
-                           ],
-                           style={'width': '100%', 'height': '400px'})
-                ], style={'flex': '1', 'marginRight': '10px'}),
+                html.Img(src='assets/mrt2.svg', style={'width': '20px', 'marginRight': '10px', 'width': '30px',
+                    'height': '30px'}),
+                html.Span([
+                    html.Strong("Max Distance to MRT: "),
+                    html.Span(id='feature-filter-mrt')
+                ], style={"marginLeft": "10px"})
+            ], style=row_style),
+            html.Div([
+                html.Img(src='assets/edu2.svg', style={'width': '20px', 'marginRight': '10px', 'width': '30px',
+                    'height': '30px'}),
+                html.Span([
+                    html.Strong("Max Distance to Primary School: "),
+                    html.Span(id='feature-filter-school')
+                ], style={"marginLeft": "10px"})
+            ], style=row_style)
+        ], style={'flex': '1'})
+    ], style={
+        'display': 'flex', 'gap': '40px',
+        'fontSize': '16px',
+        'fontFamily': 'Inter, sans-serif'
+    }),
 
-                html.Div([
-                    dl.Map(id='amenity-map-town2',
-                           center=[1.287953, 103.851784],
-                           zoom=15,
-                           children=[
-                               dl.TileLayer(url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-                                            attribution='&copy; <a href="https://carto.com/">CartoDB</a>'),
-                               dl.LayerGroup(id='map-markers-town2')
-                           ],
-                           style={'width': '100%', 'height': '400px'})
-                ], style={'flex': '1', 'marginLeft': '10px'})
-            ], style={
-                'display': 'flex', 'gap': '20px',
-                'width': '100%'
-            })
-        ], style={'marginTop': '30px'})
+    html.Div(id='bar-chart-section', children=[
+        html.H3("Price trends for properties in the area", style={
+            'textAlign': 'left', 'fontFamily': 'Inter, sans-serif', 'marginTop': '20px'
+        }),
+        html.P(id='bar-chart-subtitle', style={
+            'textAlign': 'left', 'fontFamily': 'Inter, sans-serif',
+            'fontSize': '16px', 'marginBottom': '10px'
+        }),
+        html.Div(id='bar-chart-subtitle', style={
+            'marginBottom': '10px', 'textAlign': 'left',
+            'fontFamily': 'Inter, sans-serif', 'fontSize': '16px'
+        }),
+    ]),
 
-    ], style={  # 👈 NEW OUTER CONTAINER STYLE
-        'maxWidth': '1000px',
-        'margin': '0 auto'
-    })
-])
+    html.Div([
+        html.H4("Select which summary to view:", style={
+            'fontFamily': 'Inter, sans-serif', 'marginBottom': '20px'
+        }),
+        dcc.RadioItems(
+            id='summary-toggle',
+            options=[],  # populated dynamically via callback
+            value='town1',
+            inline=True,
+            className='mode-toggle-container',
+            labelClassName='mode-toggle-label',
+            inputClassName='mode-toggle-input'
+        )
+    ], style={
+        'textAlign': 'left', 'marginTop': '20px',
+        'marginBottom': '20px', 'fontFamily': 'Inter, sans-serif'
+    }),
 
+    html.Div([
+        html.Div([
+            dcc.Graph(id="quarterly-bar-chart", config={'displayModeBar': False}, style={"height": "100%", "width": "100%"})
+        ], style={
+            "flex": "7",
+            "border": "1px solid lightgray",
+            "padding": "20px",
+            "borderRadius": "10px",
+            "backgroundColor": "white",
+            "height": "425px",
+            "boxSizing": "border-box"
+        }),
 
+        html.Div(id="price-summary-container", style={
+            "flex": "3",
+            "border": "1px solid lightgray",
+            "padding": "20px",
+            "borderRadius": "10px",
+            "fontFamily": "Inter, sans-serif",
+            "backgroundColor": "#fff",
+            "height": "425px",
+            "boxSizing": "border-box"
+        })
+    ], style={
+        "display": "flex",
+        "gap": "20px",
+        "maxWidth": "1000px",
+        "margin": "0 auto",
+        "marginTop": "20px",
+        "alignItems": "stretch"
+    }),
+
+    html.Div([
+        html.H3("📄 Recent Transactions Matching Your Filters", style={
+            'textAlign': 'center',
+            'fontFamily': 'Inter, sans-serif',
+            'marginTop': '40px',
+            'marginBottom': '20px',
+            'fontWeight': '600',
+            'fontSize': '24px'
+        })
+    ]),
+
+    html.Div([
+        html.Div([
+            html.H4("🏙️ Town 1", style={'textAlign': 'center'}),
+            html.Div(id='filter-table-town1')
+        ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+        html.Div([
+            html.H4("🏙️ Town 2", style={'textAlign': 'center'}),
+            html.Div(id='filter-table-town2')
+        ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top', 'marginLeft': '4%'})
+    ]),
+
+    dcc.Store(id='selected-postal-store'),
+    dcc.Store(id='selected-postal-store-town2'),
+
+    html.Hr(),
+
+    html.Div([
+        html.Div(id='property-details', style={'flex': '1', 'marginRight': '10px'}),
+        html.Div(id='property-details-town2', style={'flex': '1', 'marginLeft': '10px'})
+    ], style={
+        'display': 'flex',
+        'flexDirection': 'row',
+        'justifyContent': 'center',
+        'alignItems': 'flex-start',
+        'width': '100%',
+        'gap': '20px',
+        'marginTop': '30px'
+    }),
+
+    html.Div([
+        html.H3("🗺️ Map of Nearby Amenities", style={
+            'textAlign': 'center',
+            'marginTop': '40px',
+            'fontFamily': 'Inter, sans-serif'
+        }),
+        html.Div([
+            html.Div([
+                dl.Map(id='amenity-map',
+                       center=[1.287953, 103.851784],
+                       zoom=15,
+                       children=[
+                           dl.TileLayer(url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                                        attribution='&copy; <a href="https://carto.com/">CartoDB</a>'),
+                           dl.LayerGroup(id='map-markers')
+                       ],
+                       style={'width': '100%', 'height': '400px'})
+            ], style={'flex': '1', 'marginRight': '10px'}),
+
+            html.Div([
+                dl.Map(id='amenity-map-town2',
+                       center=[1.287953, 103.851784],
+                       zoom=15,
+                       children=[
+                           dl.TileLayer(url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                                        attribution='&copy; <a href="https://carto.com/">CartoDB</a>'),
+                           dl.LayerGroup(id='map-markers-town2')
+                       ],
+                       style={'width': '100%', 'height': '400px'})
+            ], style={'flex': '1', 'marginLeft': '10px'})
+        ], style={
+            'display': 'flex', 'gap': '20px',
+            'width': '100%'
+        })
+    ], style={'marginTop': '30px'})
+
+], style={  # 👈 NEW OUTER CONTAINER STYLE
+    'maxWidth': '1000px',
+    'margin': '0 auto'
+})
 
 
 # Utility function
@@ -227,17 +359,26 @@ def get_all_nearest_amenities(postal_code, hdb_amenities_dist_with_postal, all_p
     Output('quarterly-bar-chart', 'figure'),
     Output('price-summary-container', 'children'),
     Output('bar-chart-subtitle', 'children'),
-    Output('filter-summary', 'children'),
+    Output('town-filter', 'children'),
+    Output('town-filter-2', 'children'),  # ✅ Add this line
+    Output('feature-filter-flat-type', 'children'),
+    Output('feature-filter-floor', 'children'),
+    Output('feature-filter-lease', 'children'),
+    Output('feature-filter-mrt', 'children'),
+    Output('feature-filter-school', 'children'),
     Input('user-filter-store', 'data'),
     Input('summary-toggle', 'value')
 )
+
 def update_quarterly_chart(filter_data, summary_toggle):
-    df = hdb_df.copy()
     if not filter_data:
         raise dash.exceptions.PreventUpdate
 
+    df = hdb_df.copy()
     town = filter_data.get('town1')
     town2 = filter_data.get('town2')
+    town = town or "Town 1"
+    town2 = town2 or "Town 2"
     flat_type = filter_data.get('flat_type')
     floor_level = filter_data.get('floor_level')
     lease = filter_data.get('remaining_lease')
@@ -278,9 +419,9 @@ def update_quarterly_chart(filter_data, summary_toggle):
         df1 = df1[df1['min_dist_sch'] <= max_sch]
         df2 = df2[df2['min_dist_sch'] <= max_sch]
 
-    months = [f"{y}-{m:02d}" for y in [2024, 2025] for m in range(1, 13)]
-    months = months[3:15]  # Apr 2024 to Mar 2025
+    months = [f"{y}-{m:02d}" for y in [2024, 2025] for m in range(1, 13)][3:15]
     month_to_q = {m: f"Q{((int(m[5:7]) - 1) // 3) + 1} {m[:4]}" for m in months}
+
     df1 = df1[df1['month'].isin(months)]
     df2 = df2[df2['month'].isin(months)]
     df1['Quarter'] = df1['month'].map(month_to_q)
@@ -305,19 +446,10 @@ def update_quarterly_chart(filter_data, summary_toggle):
     q_avg2, df2_valid = compute_q_avg(df2, town2.title())
     combined_avg = pd.concat([q_avg1, q_avg2])
 
-    # Fallback values if town/town2 are None
-    town_display = (town or "Town 1").title()
-    town2_display = (town2 or "Town 2").title()
-
     color_map = {
-        town_display: "#7F0019",    # dark red
-        town2_display: "#e6ab2d"    # mustard yellow
+        town.title(): "#7F0019",
+        town2.title(): "#e6ab2d"
     }
-
-    combined_avg['Town'] = combined_avg['Town'].replace({
-        town.title(): town_display,
-        town2.title(): town2_display
-    })
 
     fig = px.bar(
         combined_avg,
@@ -327,35 +459,22 @@ def update_quarterly_chart(filter_data, summary_toggle):
         color_discrete_map=color_map,
         barmode='group',
         labels={'adjusted_resale_price': 'Avg Price (SGD)'},
-        width = 700,
-        height = 400
+        width=700,
+        height=400
     )
-
     fig.update_traces(width=0.3)
     fig.update_layout(
-        margin=dict(l=10, r=10, t=20, b=20),  # tight bottom
+        margin=dict(l=10, r=10, t=20, b=20),
         legend=dict(
             orientation="h",
             yanchor="bottom",
-            y= -0.17,
+            y=-0.17,
             xanchor="center",
             x=0.5,
             font=dict(size=13)
         ),
-        yaxis=dict(
-            title="",
-            tickformat=",",
-            showgrid=True,
-            zeroline=True,
-            zerolinewidth=2,
-            zerolinecolor='lightgray',
-            gridcolor="lightgray",
-            gridwidth=1
-        ),
-        xaxis=dict(
-            title="",
-            showgrid=False
-        ),
+        yaxis=dict(title="", tickformat=",", showgrid=True, zeroline=True, zerolinecolor='lightgray'),
+        xaxis=dict(title="", showgrid=False),
         plot_bgcolor="#ffffff",
         paper_bgcolor="#ffffff",
         title=None
@@ -364,34 +483,23 @@ def update_quarterly_chart(filter_data, summary_toggle):
     def build_summary(df, town_name):
         if df is None or df.empty:
             return html.Div("No data available.")
-
         avg = int(df['adjusted_resale_price'].mean())
         max_row = df.loc[df['adjusted_resale_price'].idxmax()]
         min_row = df.loc[df['adjusted_resale_price'].idxmin()]
         max_month = datetime.strptime(max_row['month'], "%Y-%m").strftime("%b %Y")
         min_month = datetime.strptime(min_row['month'], "%Y-%m").strftime("%b %Y")
-
         return html.Div([
-            html.H2(town_name, style={"fontWeight": "bold", "fontSize": "22px", "marginBottom": "10px"}),
-
-            html.H3("Within the last year", style={"fontWeight": "bold", "fontSize": "16px", "marginBottom": "10px"}),
-
-            html.Div("Average Price", style={"fontStyle": "italic", "fontSize": "16px", "fontWeight": "bold"}),
-            html.Div(f"${avg:,}", style={"fontSize": "20px", "fontWeight": "bold", "marginBottom": "25px"}),
-
-            html.Div("Highest Sold", style={"fontSize": "15px", "fontWeight": "bold"}),
-            html.Div([
-                html.Span(f"${int(max_row['adjusted_resale_price']):,}", style={"fontSize": "16px", "fontWeight": "bold"}),
-                html.Span(f"  {max_month}", style={"fontSize": "14px", "marginLeft": "6px"})
-            ], style={"fontSize": "15px"}),
-            html.Div(f"{max_row['address']}", style={"fontSize": "13px", "fontStyle": "italic", "marginBottom": "20px"}),
-
-            html.Div("Lowest Sold", style={"fontSize": "15px", "fontWeight": "bold"}),
-            html.Div([
-                html.Span(f"${int(min_row['adjusted_resale_price']):,}", style={"fontSize": "16px", "fontWeight": "bold"}),
-                html.Span(f"  {min_month}", style={"fontSize": "14px", "marginLeft": "6px"})
-            ], style={"fontSize": "15px"}),
-            html.Div(f"{min_row['address']}", style={"fontSize": "13px", "fontStyle": "italic"})
+            html.H2(town_name),
+            html.H4("Average Price", style={"fontSize": "18px", "marginBottom": "5px", "fontStyle":"italic"}),
+            html.P(f"${avg:,}", style={"fontSize": "20px", "fontWeight": "bold", "marginBottom": "20px"}),
+            html.H4("Highest Sold", style={"fontSize": "16px", "marginBottom": "5px"}),
+            html.P(f"${int(max_row['adjusted_resale_price']):,}", style={"fontSize": "18px", "fontWeight": "bold", "margin": "0"}),
+            html.P(f"{max_row['address']}", style={"fontSize": "14px", "margin": "0", "fontStyle":"italic"}),
+            html.P(f"{max_month}", style={"fontSize": "14px", "marginBottom": "20px"}),
+            html.H4("Lowest Sold", style={"fontSize": "16px", "marginBottom": "5px"}),
+            html.P(f"${int(min_row['adjusted_resale_price']):,}", style={"fontSize": "18px", "fontWeight": "bold", "margin": "0"}),
+            html.P(f"{min_row['address']}", style={"fontSize": "14px", "margin": "0", "fontStyle":"italic"}),
+            html.P(f"{min_month}", style={"fontSize": "14px", "fontStyle": "italic"})
         ], style={
             "padding": "20px",
             "fontFamily": "Inter, sans-serif"
@@ -399,21 +507,22 @@ def update_quarterly_chart(filter_data, summary_toggle):
 
     summary1 = build_summary(df1_valid, town.title())
     summary2 = build_summary(df2_valid, town2.title())
-
     subtitle = f"Based on flats in {town.title()} and {town2.title()} with {flat_type.title()} flat type and same amenity features"
-    summary_filters = html.Ul([
-        html.Li(f"🏙️ Town 1: {town}"),
-        html.Li(f"🏙️ Town 2: {town2}") if town2 else None,
-        html.Li(f"🏠 Flat Type: {flat_type}"),
-        html.Li(f"📏 Floor Level: {floor_level}"),
-        html.Li(f"🕒 Min Lease: {lease} years") if lease else None,
-        html.Li(f"🚇 Max Distance to MRT: {max_mrt} km") if max_mrt else None,
-        html.Li(f"🏫 Max Distance to School: {max_sch} km") if max_sch else None
-    ])
-
     selected_summary = summary1 if summary_toggle == 'town1' else summary2
 
-    return fig, selected_summary, subtitle, summary_filters
+    # Return plain text values
+    return (
+        fig,
+        selected_summary,
+        subtitle,
+        f"{town.title()}",
+        f"{town2.title()}",
+        f"{flat_type}",
+        f"{floor_level}",
+        f"{lease} years" if lease else "",
+        f"{max_mrt} km" if max_mrt else "",
+        f"{max_sch} km" if max_sch else ""
+    )
 
 # Callback to filter and display table
 @callback(
