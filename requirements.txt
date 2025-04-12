@@ -10,4 +10,4 @@ python-dotenv
 selenium
 beautifulsoup4
 tqdm
-xgboost
+xgboost-cpu==2.1.4
