@@ -8,6 +8,7 @@ import plotly.express as px
 from datetime import datetime
 
 
+
 register_page(__name__, path="/output-general")
 
 # Constants
@@ -53,6 +54,28 @@ row_style = {
     "marginBottom": "12px"
 }
 
+# Icons for map
+
+pinpoint_icon = {
+    "iconUrl": "/assets/location_marker.svg",
+    "iconSize": [30, 60]
+}
+
+MRT_icon = {
+    "iconUrl": "/assets/mrt.svg",
+    "iconSize": [30, 60]
+}
+
+sch_icon = {
+    "iconUrl": "/assets/edu.svg",
+    "iconSize": [30, 60]
+}
+
+hawker_icon = {
+    "iconUrl": "/assets/utensil.svg",
+    "iconSize": [30, 60]
+}
+
 layout = html.Div([
     dcc.Location(id='url'),
     dcc.Store(id='map-center-store', storage_type='memory'),
@@ -72,7 +95,7 @@ layout = html.Div([
     }),
 
     html.Div([
-    html.Div([
+        html.Div([
             html.Img(
                 src='assets/town.svg',
                 style={
@@ -242,26 +265,55 @@ layout = html.Div([
     }),
 
     html.Div([
-        html.H3("📄 Recent Transactions Matching Your Filters", style={
-            'textAlign': 'center',
-            'fontFamily': 'Inter, sans-serif',
-            'marginTop': '40px',
-            'marginBottom': '20px',
-            'fontWeight': '600',
-            'fontSize': '24px'
-        })
-    ]),
+            html.H3("Popular Units with Most Recent Transactions by Town", style={
+                'textAlign': 'left',
+                'fontFamily': 'Inter, sans-serif',
+                'fontSize': '28px',
+                'marginTop': '40px',
+                'marginBottom': '8px'
+            }),
+            html.P("For properties that match your selected filters", style={
+                'textAlign': 'left',
+                'fontFamily': 'Inter, sans-serif',
+                'fontSize': '16px',
+                'color': '#555',
+                'marginBottom': '30px'
+            }),
 
-    html.Div([
-        html.Div([
-            html.H4("🏙️ Town 1", style={'textAlign': 'center'}),
-            html.Div(id='filter-table-town1')
-        ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'}),
-        html.Div([
-            html.H4("🏙️ Town 2", style={'textAlign': 'center'}),
-            html.Div(id='filter-table-town2')
-        ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top', 'marginLeft': '4%'})
-    ]),
+            html.Div([
+                html.Div([
+                    html.H4(id='town1-name', style={
+                        'fontWeight': 'bold',
+                        'textAlign': 'left',
+                        'fontSize': '20px',
+                        'fontFamily': 'Inter, sans-serif',
+                        'marginBottom': '10px'
+                    }),dash_table.DataTable(
+                        id='transaction-table-town1',  # <-- Important! This is the missing part
+                        columns=[],  # will be populated by callback
+                        data=[],     # will be populated by callback
+                        style_table={'display': 'none'}  # hide it initially
+                    ),
+                    html.Div(id='filter-table-town1')
+                ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+
+                html.Div([
+                    html.H4(id='town2-name', style={
+                        'fontWeight': 'bold',
+                        'textAlign': 'left',
+                        'fontSize': '20px',
+                        'fontFamily': 'Inter, sans-serif',
+                        'marginBottom': '10px'
+                    }),dash_table.DataTable(
+                        id='transaction-table-town2',
+                        columns=[],
+                        data=[],
+                        style_table={'display': 'none'}
+                    ),
+                    html.Div(id='filter-table-town2')
+                ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top', 'marginLeft': '4%'})
+            ])
+        ]),
 
     dcc.Store(id='selected-postal-store'),
     dcc.Store(id='selected-postal-store-town2'),
@@ -269,23 +321,58 @@ layout = html.Div([
     html.Hr(),
 
     html.Div([
-        html.Div(id='property-details', style={'flex': '1', 'marginRight': '10px'}),
-        html.Div(id='property-details-town2', style={'flex': '1', 'marginLeft': '10px'})
+        html.Div([
+            html.H3("Property details", style={
+                'fontWeight': 'bold',
+                'textAlign': 'left',
+                'fontSize': '20px',
+                'fontFamily': 'Inter, sans-serif',
+                'marginBottom': '10px'
+            }),
+            html.Div(id='property-amenities-container')
+        ], style={
+            "flex": 1,
+            "border": "1px solid lightgray",
+            "padding": "20px",
+            "borderRadius": "10px",
+            "backgroundColor": "white",
+            "fontFamily": "Inter, sans-serif",
+            "boxSizing": "border-box"
+        }),
+
+        html.Div([
+            html.H3("Property details", style={
+                'fontWeight': 'bold',
+                'textAlign': 'left',
+                'fontSize': '20px',
+                'fontFamily': 'Inter, sans-serif',
+                'marginBottom': '10px'
+            }),
+            html.Div(id='property-amenities-container-town2')
+        ], style={
+            "flex": 1,
+            "border": "1px solid lightgray",
+            "padding": "20px",
+            "borderRadius": "10px",
+            "backgroundColor": "white",
+            "fontFamily": "Inter, sans-serif",
+            "boxSizing": "border-box"
+        })
     ], style={
         'display': 'flex',
         'flexDirection': 'row',
         'justifyContent': 'center',
-        'alignItems': 'flex-start',
+        'alignItems': 'stretch',  # ✨ Ensures both heights match as well
         'width': '100%',
         'gap': '20px',
         'marginTop': '30px'
     }),
-
     html.Div([
-        html.H3("🗺️ Map of Nearby Amenities", style={
-            'textAlign': 'center',
+        html.H3("Map of Nearby Amenities", style={
+            'textAlign': 'Left',
             'marginTop': '40px',
-            'fontFamily': 'Inter, sans-serif'
+            'fontFamily': 'Inter, sans-serif', 'marginBottom' : '40px',
+            'fontSize' : '24px'
         }),
         html.Div([
             html.Div([
@@ -319,7 +406,7 @@ layout = html.Div([
 
 ], style={  # 👈 NEW OUTER CONTAINER STYLE
     'maxWidth': '1000px',
-    'margin': '0 auto'
+    'margin': '0 auto', 'marginBottom': '40px'
 })
 
 
@@ -354,6 +441,38 @@ def get_all_nearest_amenities(postal_code, hdb_amenities_dist_with_postal, all_p
         'cbd_dist': cbd_dist,
         'address': coord_row.iloc[0]['address']
     }
+
+def generate_map_markers(postal_code):
+    result = get_all_nearest_amenities(postal_code, hdb_df, schools_df, mrt_df, hawker_df)
+    if result is None:
+        raise dash.exceptions.PreventUpdate
+
+    hdb_row = hdb_df[hdb_df['postal_code'] == postal_code]
+    if hdb_row.empty:
+        raise dash.exceptions.PreventUpdate
+
+    hdb_lat = hdb_row.iloc[0]['latitude']
+    hdb_lon = hdb_row.iloc[0]['longitude']
+
+    def find_coords(name, df, name_col):
+        row = df[df[name_col] == name]
+        return (row.iloc[0]['latitude'], row.iloc[0]['longitude']) if not row.empty else (None, None)
+
+    mrt_lat, mrt_lon = find_coords(result["mrt"][0], mrt_df, 'station_name')
+    sch_lat, sch_lon = find_coords(result["school"][0], schools_df, 'SchoolName')
+    hawker_lat, hawker_lon = find_coords(result["hawker"][0], hawker_df, 'hc_name')
+
+    markers = []
+    if hdb_lat and hdb_lon:
+        markers.append(dl.Marker(position=[hdb_lat, hdb_lon], icon=pinpoint_icon, children=dl.Tooltip("🏠 HDB Location")))
+    if mrt_lat and mrt_lon:
+        markers.append(dl.Marker(position=[mrt_lat, mrt_lon], icon = MRT_icon,children=dl.Tooltip(f"🚇 MRT: {result['mrt'][0]} ({result['mrt'][1]} km)")))
+    if sch_lat and sch_lon:
+        markers.append(dl.Marker(position=[sch_lat, sch_lon], icon = sch_icon, children=dl.Tooltip(f"🏫 School: {result['school'][0]} ({result['school'][1]} km)")))
+    if hawker_lat and hawker_lon:
+        markers.append(dl.Marker(position=[hawker_lat, hawker_lon], icon = hawker_icon, children=dl.Tooltip(f"🍜 Hawker: {result['hawker'][0]} ({result['hawker'][1]} km)")))
+
+    return markers, [hdb_lat, hdb_lon]
 
 @callback(
     Output('quarterly-bar-chart', 'figure'),
@@ -528,6 +647,7 @@ def update_quarterly_chart(filter_data, summary_toggle):
 @callback(
     Output('filter-table-town1', 'children'),
     Output('selected-postal-store', 'data'),
+    Output('transaction-table-town1', 'active_cell'),
     Input('user-filter-store', 'data'),
     Input('url', 'pathname'),
 )
@@ -546,24 +666,13 @@ def update_table(filter_data, pathname):
     df = hdb_df[
         (hdb_df['town'] == town) &
         (hdb_df[flat_type_col] == 1)
-    ]
+    ].copy()
 
-    # Floor level filter logic
-    def extract_level_range(median_str):
-        try:
-            start, end = median_str.split(" TO ")
-            return pd.Series([int(start), int(end)])
-        except:
-            return pd.Series([None, None])
-
-        # Ensure storey_median is numeric
+    # Floor level classification
     df['storey_median'] = pd.to_numeric(df['storey_median'], errors='coerce')
-
-    # Compute thresholds
     df['low_threshold'] = (df['max_floor_lvl'] * 0.25).round()
     df['high_threshold'] = (df['max_floor_lvl'] * 0.75).round()
 
-    # Classify floor level
     def classify_floor(row):
         if pd.isna(row['storey_median']) or pd.isna(row['max_floor_lvl']):
             return None
@@ -576,10 +685,9 @@ def update_table(filter_data, pathname):
 
     df['floor_category'] = df.apply(classify_floor, axis=1)
 
-    # Filter
+    # Apply filters
     if floor_level:
         df = df[df['floor_category'] == floor_level]
-
     if lease:
         df = df[df['remaining_lease'] >= lease]
     if max_mrt:
@@ -587,27 +695,42 @@ def update_table(filter_data, pathname):
     if max_sch:
         df = df[df['min_dist_sch'] <= max_sch]
 
+    # Create address field
     df['address'] = df['block'].astype(str).str.strip() + " " + df['street_name'].str.title()
-    df['Distance to MRT (km)'] = df['min_dist_mrt'].round(2)
-    df['Distance to School (km)'] = df['min_dist_sch'].round(2)
 
-    table_df = df[['month', 'address', 'adjusted_resale_price', 'postal_code']].rename(columns={
-        'month': 'Month',
+    # Filter to transactions from last year only
+    valid_months = [f"{y}-{m:02d}" for y in [2024, 2025] for m in range(1, 13)][3:15]  # Apr 2024 to Mar 2025
+    df = df[df['month'].isin(valid_months)]
+
+    # Group and aggregate for summary table
+    summary_df = df.groupby('address').agg(
+        num_transactions=('adjusted_resale_price', 'count'),
+        min_price=('adjusted_resale_price', 'min'),
+        max_price=('adjusted_resale_price', 'max')
+    ).reset_index()
+
+
+    summary_df['Price Range'] = summary_df.apply(
+        lambda row: f"${int(row['min_price']):,} - ${int(row['max_price']):,}",
+        axis=1
+    )
+
+    summary_df = summary_df.rename(columns={
         'address': 'Address',
-        'adjusted_resale_price': 'Price',
-        'postal_code': 'postal_code'  # retain this for data but hide it from view
-    })
+        'num_transactions': 'Units Sold'
+    })[['Address', 'Units Sold', 'Price Range']]
 
-    if table_df.empty:
+    summary_df = summary_df.sort_values(by='Units Sold', ascending=False).head(10)
+
+    if summary_df.empty:
         return html.Div("No results."), None
-
 
     return dash_table.DataTable(
         id='transaction-table-town1',
-        columns=[{"name": i, "id": i} for i in table_df.columns if i != "postal_code"],
-        data=table_df.to_dict('records'),
+        columns=[{"name": i, "id": i} for i in summary_df.columns],
+        data=summary_df.to_dict('records'),
         cell_selectable=True,
-        active_cell=None,
+        active_cell={'row': 0, 'column': 0, 'column_id': summary_df.columns[0]},
         style_cell={
             'fontFamily': 'Inter, sans-serif',
             'textAlign': 'left',
@@ -622,10 +745,6 @@ def update_table(filter_data, pathname):
             'borderBottom': '2px solid #dddddd',
             'fontSize': '16px',
         },
-        style_data_conditional=[{
-            'if': {'column_id': 'postal_code'},
-            'display': 'none'
-        }],
         style_table={
             'width': '100%',
             'marginTop': '10px',
@@ -633,12 +752,14 @@ def update_table(filter_data, pathname):
             'borderSpacing': '0 8px'
         },
         page_size=10
-    ), table_df.to_dict('records')
+    ), df.to_dict('records'), {'row': 0, 'column': 0, 'column_id': summary_df.columns[0]}
+
 
 
 @callback(
     Output('filter-table-town2', 'children'),
     Output('selected-postal-store-town2', 'data'),
+    Output('transaction-table-town2', 'active_cell'),
     Input('user-filter-store', 'data'),
     Input('url', 'pathname'),
 )
@@ -657,7 +778,7 @@ def update_table_town2(filter_data, pathname):
     df = hdb_df[
         (hdb_df['town'] == town2) &
         (hdb_df[flat_type_col] == 1)
-    ]
+    ].copy()
 
     df['storey_median'] = pd.to_numeric(df['storey_median'], errors='coerce')
     df['low_threshold'] = (df['max_floor_lvl'] * 0.25).round()
@@ -685,25 +806,39 @@ def update_table_town2(filter_data, pathname):
         df = df[df['min_dist_sch'] <= max_sch]
 
     df['address'] = df['block'].astype(str).str.strip() + " " + df['street_name'].str.title()
-    df['Distance to MRT (km)'] = df['min_dist_mrt'].round(2)
-    df['Distance to School (km)'] = df['min_dist_sch'].round(2)
 
-    table_df = df[['month', 'address', 'adjusted_resale_price', 'postal_code']].rename(columns={
-        'month': 'Month',
+    # Filter to last year
+    valid_months = [f"{y}-{m:02d}" for y in [2024, 2025] for m in range(1, 13)][3:15]
+    df = df[df['month'].isin(valid_months)]
+
+    summary_df = df.groupby('address').agg(
+        num_transactions=('adjusted_resale_price', 'count'),
+        min_price=('adjusted_resale_price', 'min'),
+        max_price=('adjusted_resale_price', 'max')
+    ).reset_index()
+
+    summary_df['Price Range'] = summary_df.apply(
+        lambda row: f"${int(row['min_price']):,} - ${int(row['max_price']):,}",
+        axis=1
+    )
+
+    summary_df = summary_df.rename(columns={
         'address': 'Address',
-        'adjusted_resale_price': 'Price',
-        'postal_code': 'postal_code'  # retain this for data but hide it from view
-    })
+        'num_transactions': 'Units Sold'
+    })[['Address', 'Units Sold', 'Price Range']]
 
-    if table_df.empty:
+    summary_df = summary_df.sort_values(by='Units Sold', ascending=False).head(10)
+
+
+    if summary_df.empty:
         return html.Div("No results."), None
 
     return dash_table.DataTable(
-        id='transaction-table-town2',  # or 'transaction-table-town2'
-        columns=[{"name": i, "id": i} for i in table_df.columns if i != "postal_code"],
-        data=table_df.to_dict('records'),
+        id='transaction-table-town2',
+        columns=[{"name": i, "id": i} for i in summary_df.columns],
+        data=summary_df.to_dict('records'),
         cell_selectable=True,
-        active_cell=None,
+        active_cell={'row': 0, 'column': 0, 'column_id': summary_df.columns[0]},
         style_cell={
             'fontFamily': 'Inter, sans-serif',
             'textAlign': 'left',
@@ -712,10 +847,6 @@ def update_table_town2(filter_data, pathname):
             'fontSize': '15px',
             'backgroundColor': '#f9f9f9',
         },
-        style_data_conditional=[{
-            'if': {'column_id': 'postal_code'},
-            'display': 'none'
-        }],
         style_header={
             'backgroundColor': '#ffffff',
             'fontWeight': 'bold',
@@ -730,198 +861,132 @@ def update_table_town2(filter_data, pathname):
         },
         selected_rows=[],
         page_size=10
-    ), table_df.to_dict('records')
+    ), df.to_dict('records'),  {'row': 0, 'column': 0, 'column_id': summary_df.columns[0]}
 
+def make_amenity(icon, title, value):
+    return html.Div([
+        html.Img(src=f"/assets/{icon}", style={
+            "width": "45px", "height": "45px", "marginRight": "12px", "flexShrink": "0", "marginTop": "2px"
+        }),
+        html.Div([
+            html.Div(title, style={
+                "fontWeight": "600", "fontSize": "15px", "marginBottom": "2px"
+            }),
+            html.Div(value, style={
+                "fontSize": "14px", "color": "#333"
+            })
+        ])
+    ], style={
+        "display": "flex", "alignItems": "flex-start", "marginBottom": "20px"
+    })
 
 # Callback to update details on click
 @callback(
-    Output('property-details', 'children'),
+    Output('property-amenities-container', 'children'),
     Input('transaction-table-town1', 'active_cell'),
-    State('transaction-table-town1', 'data')
+    State('transaction-table-town1', 'data'),
+    State('selected-postal-store', 'data')
 )
-def display_details(active_cell, table_data):
-    if not active_cell or not table_data:
-        return ""
+def display_details_split(active_cell, table_data, original_data):
+    if not active_cell or not table_data or not original_data:
+        return "No data."
 
-    row_idx = active_cell['row']
-    row = table_data[row_idx]
-    postal = row['postal_code']
+    selected_address = table_data[active_cell['row']]['Address']
+
+    for row in original_data:
+        if row['address'] == selected_address:
+            postal = row['postal_code']
+            break
+    else:
+        return html.Div("⚠️ Address not found")
+
     result = get_all_nearest_amenities(postal, hdb_df, schools_df, mrt_df, hawker_df)
-
     if result is None:
         return html.Div("⚠️ Unable to retrieve details.")
 
-    return html.Div([
-        html.H4("🏠 Property details", style={'marginBottom': '20px'}),
-        html.P(f"📍 {result['address']}"),
-        html.P(f"🚇 Nearest MRT: {result['mrt'][0]} ({result['mrt'][1]} km)"),
-        html.P(f"🎓 Nearest School: {result['school'][0]} ({result['school'][1]} km)"),
-        html.P(f"🍜 Nearest Hawker Center: {result['hawker'][0]} ({result['hawker'][1]} km)"),
-        html.P(f"🏙️ Distance to CBD: {result['cbd_dist']} km"),
-
-    ], style={
-        "border": "1px solid lightgray",
-        "padding": "20px",
-        "borderRadius": "10px",
-        "backgroundColor": "white",
-        "fontFamily": "Inter, sans-serif",
-        "width": "100%",
-        "boxSizing": "border-box"
-    })
+    amenities = [
+        make_amenity("location_marker.svg", "Address", result['address']),
+        make_amenity("mrt.svg", "Nearest MRT", f"{result['mrt'][0]}, {result['mrt'][1]} km"),
+        make_amenity("edu.svg", "Nearest Primary School", f"{result['school'][0]}, {result['school'][1]} km"),
+        make_amenity("utensil.svg", "Nearest Hawker Center", f"{result['hawker'][0]}, {result['hawker'][1]} km"),
+        make_amenity("city.svg", "Distance to CBD", f"{result['cbd_dist']} km")
+    ]
+    return amenities
 
 
 @callback(
-    Output('property-details-town2', 'children'),
+    Output('property-amenities-container-town2', 'children'),
     Input('transaction-table-town2', 'active_cell'),
-    State('transaction-table-town2', 'data')
+    State('transaction-table-town2', 'data'),
+    State('selected-postal-store-town2', 'data')
 )
-def display_details_town2(active_cell, table_data):
-    if not active_cell or not table_data:
-        return ""
+def display_details_split_town2(active_cell, table_data, original_data):
+    if not active_cell or not table_data or not original_data:
+        return "No data."
 
-    row_idx = active_cell['row']
-    row = table_data[row_idx]
-    postal = row['postal_code']
+    selected_address = table_data[active_cell['row']]['Address']
+
+    for row in original_data:
+        if row['address'] == selected_address:
+            postal = row['postal_code']
+            break
+    else:
+        return html.Div("⚠️ Address not found")
+
     result = get_all_nearest_amenities(postal, hdb_df, schools_df, mrt_df, hawker_df)
-
     if result is None:
         return html.Div("⚠️ Unable to retrieve details.")
 
-    return html.Div([
-        html.H4("🏠 Property details (Town 2)", style={'marginBottom': '20px'}),
-        html.P(f"📍 {result['address']}"),
-        html.P(f"🚇 Nearest MRT: {result['mrt'][0]} ({result['mrt'][1]} km)"),
-        html.P(f"🎓 Nearest School: {result['school'][0]} ({result['school'][1]} km)"),
-        html.P(f"🍜 Nearest Hawker Center: {result['hawker'][0]} ({result['hawker'][1]} km)"),
-        html.P(f"🏙️ Distance to CBD: {result['cbd_dist']} km"),
-    ], style={
-        "border": "1px solid lightgray",
-        "padding": "20px",
-        "borderRadius": "10px",
-        "backgroundColor": "white",
-        "fontFamily": "Inter, sans-serif",
-        "width": "100%",
-        "boxSizing": "border-box"
-    })
-
-
+    amenities = [
+        make_amenity("location_marker.svg", "Address", result['address']),
+        make_amenity("mrt.svg", "Nearest MRT", f"{result['mrt'][0]}, {result['mrt'][1]} km"),
+        make_amenity("edu.svg", "Nearest Primary School", f"{result['school'][0]}, {result['school'][1]} km"),
+        make_amenity("utensil.svg", "Nearest Hawker Center", f"{result['hawker'][0]}, {result['hawker'][1]} km"),
+        make_amenity("city.svg", "Distance to CBD", f"{result['cbd_dist']} km")
+    ]
+    return amenities
 
 @callback(
     Output('map-markers', 'children'),
     Output('amenity-map', 'center'),
-    Input('transaction-table-town1', 'selected_rows'),
-    State('transaction-table-town1', 'data')
+    Input('transaction-table-town1', 'active_cell'),
+    State('transaction-table-town1', 'data'),
+    State('selected-postal-store', 'data')
 )
-def update_map_and_center(selected_rows, table_data):
-    if not selected_rows or not table_data:
+def update_map_and_center(active_cell, table_data, original_data):
+    if not active_cell or not table_data or not original_data:
         raise dash.exceptions.PreventUpdate
 
-    selected_row = table_data[selected_rows[0]]
-    postal_code = selected_row.get("postal_code")
-
-    if not postal_code:
+    selected_address = table_data[active_cell['row']]['Address']
+    for row in original_data:
+        if row['address'] == selected_address:
+            postal_code = str(row['postal_code']).zfill(6)
+            break
+    else:
         raise dash.exceptions.PreventUpdate
 
-    # Ensure string & zero-padded
-    postal_code = str(postal_code).zfill(6)
-
-    result = get_all_nearest_amenities(
-        postal_code=postal_code,  # already string
-        hdb_amenities_dist_with_postal=hdb_df,
-        all_primary_schools=schools_df,
-        mrt_stations=mrt_df,
-        hawkercentrecoord=hawker_df
-    )
-
-    if result is None:
-        raise dash.exceptions.PreventUpdate
-
-    hdb_row = hdb_df[hdb_df['postal_code'] == postal_code]
-    if hdb_row.empty:
-        raise dash.exceptions.PreventUpdate
-
-    hdb_lat = hdb_row.iloc[0]['latitude']
-    hdb_lon = hdb_row.iloc[0]['longitude']
-
-    def find_coords(name, df, name_col):
-        row = df[df[name_col] == name]
-        if not row.empty:
-            return row.iloc[0]['latitude'], row.iloc[0]['longitude']
-        return None, None
-
-    mrt_lat, mrt_lon = find_coords(result["mrt"][0], mrt_df, 'station_name')
-    sch_lat, sch_lon = find_coords(result["school"][0], schools_df, 'SchoolName')
-    hawker_lat, hawker_lon = find_coords(result["hawker"][0], hawker_df, 'hc_name')
-
-    markers = []
-    if hdb_lat and hdb_lon:
-        markers.append(dl.Marker(position=[hdb_lat, hdb_lon], children=dl.Tooltip("🏠 HDB Location")))
-    if mrt_lat and mrt_lon:
-        markers.append(dl.Marker(position=[mrt_lat, mrt_lon], children=dl.Tooltip(f"🚇 MRT: {result['mrt'][0]} ({result['mrt'][1]} km)")))
-    if sch_lat and sch_lon:
-        markers.append(dl.Marker(position=[sch_lat, sch_lon], children=dl.Tooltip(f"🏫 School: {result['school'][0]} ({result['school'][1]} km)")))
-    if hawker_lat and hawker_lon:
-        markers.append(dl.Marker(position=[hawker_lat, hawker_lon], children=dl.Tooltip(f"🍜 Hawker: {result['hawker'][0]} ({result['hawker'][1]} km)")))
-
-    return markers, [hdb_lat, hdb_lon]
+    return generate_map_markers(postal_code)
 
 @callback(
     Output('map-markers-town2', 'children'),
     Output('amenity-map-town2', 'center'),
-    Input('transaction-table-town2', 'selected_rows'),
-    State('transaction-table-town2', 'data')
+    Input('transaction-table-town2', 'active_cell'),
+    State('transaction-table-town2', 'data'),
+    State('selected-postal-store-town2', 'data')
 )
-def update_map_and_center_town2(selected_rows, table_data):
-    if not selected_rows or not table_data:
+def update_map_and_center_town2(active_cell, table_data, original_data):
+    if not active_cell or not table_data or not original_data:
         raise dash.exceptions.PreventUpdate
 
-    selected_row = table_data[selected_rows[0]]
-    postal_code = selected_row.get("postal_code")
-
-    if not postal_code:
+    selected_address = table_data[active_cell['row']]['Address']
+    for row in original_data:
+        if row['address'] == selected_address:
+            postal_code = str(row['postal_code']).zfill(6)
+            break
+    else:
         raise dash.exceptions.PreventUpdate
 
-    postal_code = str(postal_code).zfill(6)
-
-    result = get_all_nearest_amenities(
-        postal_code=postal_code,
-        hdb_amenities_dist_with_postal=hdb_df,
-        all_primary_schools=schools_df,
-        mrt_stations=mrt_df,
-        hawkercentrecoord=hawker_df
-    )
-
-    if result is None:
-        raise dash.exceptions.PreventUpdate
-
-    hdb_row = hdb_df[hdb_df['postal_code'] == postal_code]
-    if hdb_row.empty:
-        raise dash.exceptions.PreventUpdate
-
-    hdb_lat = hdb_row.iloc[0]['latitude']
-    hdb_lon = hdb_row.iloc[0]['longitude']
-
-    def find_coords(name, df, name_col):
-        row = df[df[name_col] == name]
-        if not row.empty:
-            return row.iloc[0]['latitude'], row.iloc[0]['longitude']
-        return None, None
-
-    mrt_lat, mrt_lon = find_coords(result["mrt"][0], mrt_df, 'station_name')
-    sch_lat, sch_lon = find_coords(result["school"][0], schools_df, 'SchoolName')
-    hawker_lat, hawker_lon = find_coords(result["hawker"][0], hawker_df, 'hc_name')
-
-    markers = []
-    if hdb_lat and hdb_lon:
-        markers.append(dl.Marker(position=[hdb_lat, hdb_lon], children=dl.Tooltip("🏠 HDB Location")))
-    if mrt_lat and mrt_lon:
-        markers.append(dl.Marker(position=[mrt_lat, mrt_lon], children=dl.Tooltip(f"🚇 MRT: {result['mrt'][0]} ({result['mrt'][1]} km)")))
-    if sch_lat and sch_lon:
-        markers.append(dl.Marker(position=[sch_lat, sch_lon], children=dl.Tooltip(f"🏫 School: {result['school'][0]} ({result['school'][1]} km)")))
-    if hawker_lat and hawker_lon:
-        markers.append(dl.Marker(position=[hawker_lat, hawker_lon], children=dl.Tooltip(f"🍜 Hawker: {result['hawker'][0]} ({result['hawker'][1]} km)")))
-
-    return markers, [hdb_lat, hdb_lon]
+    return generate_map_markers(postal_code)
 
 @callback(
     Output('transaction-table-town1', 'style_data_conditional'),
@@ -1000,3 +1065,4 @@ def update_town_titles(filter_data):
     town1 = filter_data.get('town1', 'Town 1') if filter_data else 'Town 1'
     town2 = filter_data.get('town2', 'Town 2') if filter_data else 'Town 2'
     return town1.title(), town2.title()
+
