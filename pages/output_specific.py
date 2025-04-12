@@ -10,9 +10,18 @@ from functions.input_for_model import get_all_nearest_amenities  # assuming it's
 
 register_page(__name__, path="/output-specific")
 
-model_package = joblib.load("models/final_model.pkl")
-model = model_package['model']
-q_value = model_package['q_value']
+# model_package = joblib.load("models/final_model.pkl")
+# model = model_package['model']
+# q_value = model_package['q_value']
+
+bst = xgb.Booster()
+bst.load_model("models/xgb_model.bin")
+
+with open("models/q_value.txt", "r") as f:
+    q_value = float(f.read())
+# Now 'bst' is your loaded XGBoost model used for prediction.
+model = bst
+
 
 layout = html.Div([
     html.Div(dcc.Link("< Back to Selection", href="/input-specific", style={
