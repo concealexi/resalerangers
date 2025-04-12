@@ -8,7 +8,7 @@ import pandas as pd
 from models.model_tuning import conformal_predict
 from functions.get_transactions import get_transactions, get_block_transactions
 from functions.input_for_model import get_all_nearest_amenities  # assuming it's in functions
-
+import xgboost as xgb
 register_page(__name__, path="/output-specific")
 
 # model_package = joblib.load("models/final_model.pkl")
