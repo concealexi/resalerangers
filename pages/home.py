@@ -141,7 +141,7 @@ layout = html.Div([
                         )
                     ], style={'marginBottom': '20px'})
                 ], style=card_style),
-                href='/input-specific-dummy',
+                href='/input-specific',
                 style={'textDecoration': 'none'}
             ),
 
