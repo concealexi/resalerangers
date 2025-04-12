@@ -10,7 +10,7 @@ hdb_info = pd.read_csv("dataset/hdb_informations.csv")
 
 
 
-# Define common styles for inputs
+# Common styles for inputs
 common_input_style = {
     'width': '100%',
     'fontSize': '16px',
@@ -31,7 +31,7 @@ common_dropdown_style = {
 
 layout = html.Div(
     children=[
-        # -- Top bar with "back to start" link --
+        # back to start button redirect to home page
         html.Div(
             children=[
                 dcc.Link("< back to start", href="/", style={
@@ -44,7 +44,7 @@ layout = html.Div(
             style={'marginLeft': '20px', 'marginTop': '20px'}
         ),
 
-        # -- Page Title --
+        # Page Title 
         html.H1(
             "What property are you looking for?",
             style={
@@ -57,7 +57,7 @@ layout = html.Div(
             }
         ),
 
-        # -- Subheading --
+        # Subheading 
         html.P(
             "Please fill in the characteristics for the flat of your choice",
             style={
@@ -72,7 +72,7 @@ layout = html.Div(
         # Hidden location component for redirection
         dcc.Location(id='redirect-location-dummy', refresh=True),
 
-        # -- Custom Toggle (Segmented Control) using manual inputs/labels --
+        # Toggle for manual inputs/propguru
         html.Div(
             dcc.RadioItems(
                 id='input-mode',
@@ -89,7 +89,7 @@ layout = html.Div(
             style={'display':'flex','justifyContent':'center','marginBottom':'30px'}
         ),
 
-        # -- Main Form Container --
+        # Main Form Container
         html.Div(
             id='manual-input-container',
             style={'display':'block','width':'600px','margin':'0 auto','textAlign':'left'},
@@ -134,7 +134,7 @@ layout = html.Div(
             ]
         ),
 
-        # ----- PropertyGuru Input Container -----
+        # PropertyGuru Input Container
         html.Div(
             id='guru-input-container',
             style={'display':'none','width':'600px','margin':'0 auto','textAlign':'left'},
@@ -154,7 +154,7 @@ layout = html.Div(
             ]
         ),
 
-        # Center the Submit button
+        # Submit button
         html.Div(
             html.Button(
                 'Calculate Price',
@@ -174,7 +174,7 @@ layout = html.Div(
             style={"textAlign": "center", "marginTop": "20px"}
         ),
 
-        # -- Error / Info Output --
+        # Error / Info Output 
         html.Div(
             id='expert-output-dummy',
             style={
@@ -191,7 +191,7 @@ layout = html.Div(
     }
 )
 
-# -- Callback to Toggle Input Containers --
+# Callback for toggle switch
 @callback(
     [Output('manual-input-container','style'),
      Output('guru-input-container','style')],
@@ -205,7 +205,7 @@ def toggle_input_containers(mode):
     else:
         return guru_style, manual_style
 
-# -- Callback to Validate & Redirect --
+# Callback to Validate & Redirect to output page
 @callback(
     [Output('redirect-location-dummy','pathname'),
      Output('expert-output-dummy','children'),
@@ -282,6 +282,7 @@ def capture_expert_input(n, mode, postal, flat, area, floor_m, lease, url, floor
             return '/output-specific', None, {}, guru_data
     return no_update, None, no_update, no_update
 
+# callback to filter whether a certain flat type exists
 @callback(
     Output('expert-flat-type', 'options'),
     Input('expert-postal-code', 'value')

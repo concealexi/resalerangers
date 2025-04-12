@@ -7,7 +7,7 @@ import xgboost as xgb
 import pandas as pd
 from models.model_tuning import conformal_predict
 from functions.get_transactions import get_transactions, get_block_transactions
-from functions.input_for_model import get_all_nearest_amenities  # assuming it's in functions
+from functions.input_for_model import get_all_nearest_amenities  
 
 register_page(__name__, path="/output-specific")
 
@@ -20,15 +20,15 @@ bst.load_model("models/xgb_model.bin")
 
 with open("models/q_value.txt", "r") as f:
     q_value = float(f.read())
-# Now 'bst' is your loaded XGBoost model used for prediction.
 model = bst
 
 
 layout = html.Div([
+    # back link to home page
     html.Div(dcc.Link("< back to selection", href="/input-specific", style={
         'fontFamily': 'Inter, sans-serif', 'fontSize': '14px',
         'color': 'black', 'textDecoration': 'none'}), style={'margin': '20px'}),
-
+    # render prediction title
     html.Div([
         html.Div(id="prediction-title", style={"fontSize": "20px", "fontWeight": "bold",
                                                "fontFamily": "Inter, sans-serif", "marginBottom": "10px"}),
@@ -39,10 +39,14 @@ layout = html.Div([
     html.Div([
         html.H4("Price trends for this property", style={"fontFamily": "Inter, sans-serif", "fontSize": '18px'}),
         html.P(id="price-trend-text", style={"fontFamily": "Inter, sans-serif"}),
+        
+        # toggle buttons for 1km and particular block
         dcc.RadioItems(id='price-trend-toggle',
             options=[{'label': 'Within 1km', 'value': '1km'}, {'label': 'Your block', 'value': 'block'}],
             value='1km', inline=True, className='mode-toggle-container',
             labelClassName='mode-toggle-label', inputClassName='mode-toggle-input'),
+        
+        # bar chart & summary statistics
         html.Div([
             html.Div([
                 html.Div([
@@ -96,10 +100,9 @@ layout = html.Div([
         )
     ], style={"maxWidth": "1000px", "margin": "0 auto", "marginTop": "40px"}),
 
-    # Property details (with SVG icons + map beside)
+    # Property details
     html.Div([
 
-        # Combine header and amenities into a single left column
         html.Div([  
             html.H4("Property details", style={
                 "fontFamily": "Inter, sans-serif",
@@ -117,7 +120,7 @@ layout = html.Div([
             })
         ], style={
             "flex": "1",
-            "height": "340px",  # match the map height
+            "height": "340px",  
             "display": "flex",
             "flexDirection": "column",
             "justifyContent": "space-between"
@@ -126,7 +129,7 @@ layout = html.Div([
         # Map
         dl.Map(id='selected-map',
             center=[1.3521, 103.8198],
-            zoom=16,
+            zoom=15,
             children=[
                 dl.TileLayer(
                     url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
@@ -156,7 +159,7 @@ layout = html.Div([
     })
 ], style={"backgroundColor": "white", "padding": "20px"})
 
-
+# callback for prediction at the top of screen
 @callback(
     Output("prediction-title", "children"),
     Output("price-section", "children"),
@@ -191,12 +194,13 @@ def display_prediction(manual_data, guru_data):
 
     return "", "", "", ""
 
+# callback to update barchart & summary stats dynamically following the toggle
 stored_records = {}
 @callback(
     Output("price-bar-chart", "figure"),
     Output("summary-stats", "children"),
     Output("transaction-table", "data"),
-    Output("transaction-table", "active_cell"),  # <-- NEW
+    Output("transaction-table", "active_cell"),  
     Input("price-trend-toggle", "value"),
     Input("manual-store", "data"),
     Input("guru-store", "data")
@@ -214,7 +218,7 @@ def update_chart(toggle_value, manual_data, guru_data):
     else:
         top3, recent_year, full = get_block_transactions(postal, flat_type)
 
-    stored_records['full'] = full.to_dict('records')  # Used for row click
+    stored_records['full'] = full.to_dict('records')  
     bar_df = recent_year.copy()
     bar_df['quarter'] = pd.to_datetime(bar_df['month']).dt.to_period('Q').astype(str)
     chart_data = (
@@ -262,7 +266,7 @@ def update_chart(toggle_value, manual_data, guru_data):
         }
     }
     if recent_year.empty:
-        return dash.no_update  # or other fallback values
+        return dash.no_update  
     max_row = recent_year.loc[recent_year['adjusted_resale_price'].idxmax()]
     min_row = recent_year.loc[recent_year['adjusted_resale_price'].idxmin()]
     avg_price = round(recent_year['adjusted_resale_price'].mean())
@@ -285,6 +289,7 @@ def update_chart(toggle_value, manual_data, guru_data):
 
     return fig, stats_html, top3.to_dict('records'), {"row": 0, "column": 0, "column_id": "month"}
 
+# callback for bottom part of the page (property details and amenities)
 @callback(
     Output("amenities-list", "children"),
     Output("selected-marker", "children"),
@@ -343,11 +348,25 @@ def update_amenities_and_map(active_cell):
                      f"{nearest['distance_to_cbd']} km")
     ]
 
-    marker = dl.Marker(position=[lat, lon], children=dl.Tooltip("🏠 Selected Property"))
+    marker_home = dl.Marker(position=[lat, lon], icon={"iconUrl": "/assets/location_marker.svg", "iconSize": [30, 60]},
+                        children=dl.Tooltip("🏠 Selected Property"))
 
-    return amenities, [marker], [lat, lon]
+    marker_mrt = dl.Marker(position=[nearest['nearest_mrt']['coords'][0], nearest['nearest_mrt']['coords'][1]],
+                        icon={"iconUrl": "/assets/mrt.svg", "iconSize": [20, 40]},
+                        children=dl.Tooltip(f"🚇 MRT: {nearest['nearest_mrt']['name']} ({nearest['nearest_mrt']['distance_km']} km)"))
+
+    marker_school = dl.Marker(position=[nearest['nearest_school']['coords'][0], nearest['nearest_school']['coords'][1]],
+                            icon={"iconUrl": "/assets/edu.svg", "iconSize": [30, 60]},
+                            children=dl.Tooltip(f"🏫 School: {nearest['nearest_school']['name']} ({nearest['nearest_school']['distance_km']} km)"))
+
+    marker_hawker = dl.Marker(position=[nearest['nearest_foodcourt']['coords'][0], nearest['nearest_foodcourt']['coords'][1]],
+                            icon={"iconUrl": "/assets/utensil.svg", "iconSize": [25, 50]},
+                            children=dl.Tooltip(f"🍜 Hawker: {nearest['nearest_foodcourt']['name']} ({nearest['nearest_foodcourt']['distance_km']} km)"))
+
+    return amenities, [marker_home, marker_mrt, marker_school, marker_hawker], [lat, lon]
 
 
+# callback for styling the highlights of transaction table
 @callback(
     Output('transaction-table', 'style_data_conditional'),
     Input('transaction-table', 'active_cell')

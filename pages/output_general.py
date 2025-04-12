@@ -294,10 +294,10 @@ layout = html.Div([
                         'fontFamily': 'Inter, sans-serif',
                         'marginBottom': '10px'
                     }),dash_table.DataTable(
-                        id='transaction-table-town1',  # <-- Important! This is the missing part
-                        columns=[],  # will be populated by callback
-                        data=[],     # will be populated by callback
-                        style_table={'display': 'none'}  # hide it initially
+                        id='transaction-table-town1', 
+                        columns=[], 
+                        data=[],     
+                        style_table={'display': 'none'} 
                     ),
                     html.Div(id='filter-table-town1')
                 ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'}),
@@ -367,7 +367,7 @@ layout = html.Div([
         'display': 'flex',
         'flexDirection': 'row',
         'justifyContent': 'center',
-        'alignItems': 'stretch',  # ✨ Ensures both heights match as well
+        'alignItems': 'stretch', 
         'width': '100%',
         'gap': '20px',
         'marginTop': '30px'
@@ -409,7 +409,7 @@ layout = html.Div([
         })
     ], style={'marginTop': '30px'})
 
-], style={  # 👈 NEW OUTER CONTAINER STYLE
+], style={  
     'maxWidth': '1000px',
     'margin': '0 auto', 'marginBottom': '40px'
 })
