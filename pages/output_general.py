@@ -127,7 +127,7 @@ layout = html.Div([
 
     html.Div([
         html.Div([
-            html.Div([
+          html.Div([
                 html.Img(src='assets/flattype.svg', style={'width': '20px', 'marginRight': '10px', 'width': '30px',
                     'height': '30px'}),
                 html.Span([
@@ -591,8 +591,11 @@ def update_table(filter_data, pathname):
     df['Distance to MRT (km)'] = df['min_dist_mrt'].round(2)
     df['Distance to School (km)'] = df['min_dist_sch'].round(2)
 
-    table_df = df[['address', 'adjusted_resale_price', 'month', 'postal_code', 'Distance to MRT (km)', 'Distance to School (km)']].rename(columns={
-        'address': 'Address', 'adjusted_resale_price': 'Price (SGD)', 'month': 'Date Sold'
+    table_df = df[['month', 'address', 'adjusted_resale_price', 'postal_code']].rename(columns={
+        'month': 'Month',
+        'address': 'Address',
+        'adjusted_resale_price': 'Price',
+        'postal_code': 'postal_code'  # retain this for data but hide it from view
     })
 
     if table_df.empty:
@@ -600,31 +603,35 @@ def update_table(filter_data, pathname):
 
 
     return dash_table.DataTable(
-        id='transaction-table-town1',  # or 'transaction-table-town2'
-        columns=[{"name": i, "id": i} for i in table_df.columns],
+        id='transaction-table-town1',
+        columns=[{"name": i, "id": i} for i in table_df.columns if i != "postal_code"],
         data=table_df.to_dict('records'),
-        row_selectable='single',
+        cell_selectable=True,
+        active_cell=None,
         style_cell={
             'fontFamily': 'Inter, sans-serif',
             'textAlign': 'left',
             'padding': '16px',
             'border': 'none',
             'fontSize': '15px',
-            'backgroundColor': '#f9f9f9'
+            'backgroundColor': '#f9f9f9',
         },
         style_header={
             'backgroundColor': '#ffffff',
             'fontWeight': 'bold',
             'borderBottom': '2px solid #dddddd',
-            'fontSize': '16px'
+            'fontSize': '16px',
         },
+        style_data_conditional=[{
+            'if': {'column_id': 'postal_code'},
+            'display': 'none'
+        }],
         style_table={
             'width': '100%',
             'marginTop': '10px',
             'borderCollapse': 'separate',
             'borderSpacing': '0 8px'
         },
-        selected_rows=[],
         page_size=10
     ), table_df.to_dict('records')
 
@@ -681,8 +688,11 @@ def update_table_town2(filter_data, pathname):
     df['Distance to MRT (km)'] = df['min_dist_mrt'].round(2)
     df['Distance to School (km)'] = df['min_dist_sch'].round(2)
 
-    table_df = df[['address', 'adjusted_resale_price', 'month', 'postal_code', 'Distance to MRT (km)', 'Distance to School (km)']].rename(columns={
-        'address': 'Address', 'adjusted_resale_price': 'Price (SGD)', 'month': 'Date Sold'
+    table_df = df[['month', 'address', 'adjusted_resale_price', 'postal_code']].rename(columns={
+        'month': 'Month',
+        'address': 'Address',
+        'adjusted_resale_price': 'Price',
+        'postal_code': 'postal_code'  # retain this for data but hide it from view
     })
 
     if table_df.empty:
@@ -690,22 +700,27 @@ def update_table_town2(filter_data, pathname):
 
     return dash_table.DataTable(
         id='transaction-table-town2',  # or 'transaction-table-town2'
-        columns=[{"name": i, "id": i} for i in table_df.columns],
+        columns=[{"name": i, "id": i} for i in table_df.columns if i != "postal_code"],
         data=table_df.to_dict('records'),
-        row_selectable='single',
+        cell_selectable=True,
+        active_cell=None,
         style_cell={
             'fontFamily': 'Inter, sans-serif',
             'textAlign': 'left',
             'padding': '16px',
             'border': 'none',
             'fontSize': '15px',
-            'backgroundColor': '#f9f9f9'
+            'backgroundColor': '#f9f9f9',
         },
+        style_data_conditional=[{
+            'if': {'column_id': 'postal_code'},
+            'display': 'none'
+        }],
         style_header={
             'backgroundColor': '#ffffff',
             'fontWeight': 'bold',
             'borderBottom': '2px solid #dddddd',
-            'fontSize': '16px'
+            'fontSize': '16px',
         },
         style_table={
             'width': '100%',
@@ -721,14 +736,15 @@ def update_table_town2(filter_data, pathname):
 # Callback to update details on click
 @callback(
     Output('property-details', 'children'),
-    Input('transaction-table-town1', 'selected_rows'),
+    Input('transaction-table-town1', 'active_cell'),
     State('transaction-table-town1', 'data')
 )
-def display_details(selected_rows, table_data):
-    if not selected_rows or not table_data:
+def display_details(active_cell, table_data):
+    if not active_cell or not table_data:
         return ""
 
-    row = table_data[selected_rows[0]]
+    row_idx = active_cell['row']
+    row = table_data[row_idx]
     postal = row['postal_code']
     result = get_all_nearest_amenities(postal, hdb_df, schools_df, mrt_df, hawker_df)
 
@@ -756,14 +772,15 @@ def display_details(selected_rows, table_data):
 
 @callback(
     Output('property-details-town2', 'children'),
-    Input('transaction-table-town2', 'selected_rows'),
+    Input('transaction-table-town2', 'active_cell'),
     State('transaction-table-town2', 'data')
 )
-def display_details_town2(selected_rows, table_data):
-    if not selected_rows or not table_data:
+def display_details_town2(active_cell, table_data):
+    if not active_cell or not table_data:
         return ""
 
-    row = table_data[selected_rows[0]]
+    row_idx = active_cell['row']
+    row = table_data[row_idx]
     postal = row['postal_code']
     result = get_all_nearest_amenities(postal, hdb_df, schools_df, mrt_df, hawker_df)
 
@@ -973,3 +990,13 @@ def update_toggle_options(filter_data):
         options.append({'label': f'{town2.title()} ', 'value': 'town2'})
 
     return options, 'town1'
+
+@callback(
+    Output('town1-name', 'children'),
+    Output('town2-name', 'children'),
+    Input('user-filter-store', 'data'),
+)
+def update_town_titles(filter_data):
+    town1 = filter_data.get('town1', 'Town 1') if filter_data else 'Town 1'
+    town2 = filter_data.get('town2', 'Town 2') if filter_data else 'Town 2'
+    return town1.title(), town2.title()

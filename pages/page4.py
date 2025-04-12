@@ -226,7 +226,8 @@ def update_chart(toggle_value, manual_data, guru_data):
             "plot_bgcolor": "white"
         }
     }
-
+    if recent_year.empty:
+        return dash.no_update  # or other fallback values
     max_row = recent_year.loc[recent_year['adjusted_resale_price'].idxmax()]
     min_row = recent_year.loc[recent_year['adjusted_resale_price'].idxmin()]
     avg_price = round(recent_year['adjusted_resale_price'].mean())
