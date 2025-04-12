@@ -81,15 +81,19 @@ layout = html.Div([
     dcc.Location(id='url'),
     dcc.Store(id='map-center-store', storage_type='memory'),
     html.Div(
-        children=[
-            dcc.Link("< back to start", href="/", style={
-                    'fontFamily': 'Inter, sans-serif',
-                    'fontSize': '14px',
-                    'color': 'black',
-                    'textDecoration': 'none'
-                })
-            ],
-            style={'marginLeft': '20px', 'marginTop': '20px', 'marginBottom': '30px'}
+        dcc.Link("< back to start", href="/", style={
+            'fontFamily': 'Inter, sans-serif',
+            'fontSize': '14px',
+            'color': 'black',
+            'textDecoration': 'none'
+        }),
+        style={
+            'width': '100%',
+            'textAlign': 'left',
+            'marginLeft': '-270px',
+            'marginTop': '40px',
+            'marginBottom': '40px'
+        }
     ),
     html.H3("You selected 2 towns", style={
         'fontFamily': 'Inter, sans-serif', 'textAlign': 'left'
@@ -672,7 +676,7 @@ def update_quarterly_chart(filter_data, summary_toggle):
 )
 def update_table(filter_data, pathname):
     if pathname != "/output-general" or not filter_data:
-        return html.Div("No data."), None
+        return html.Div("No data."), None, None
 
     town = filter_data.get('town1')
     flat_type = filter_data.get('flat_type')
@@ -789,7 +793,7 @@ def update_table(filter_data, pathname):
 )
 def update_table_town2(filter_data, pathname):
     if pathname != "/output-general" or not filter_data or not filter_data.get("town2"):
-        return html.Div("No data."), None
+        return html.Div("No data."), None, None
 
     town2 = filter_data.get('town2')
     flat_type = filter_data.get('flat_type')

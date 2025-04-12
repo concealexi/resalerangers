@@ -25,7 +25,7 @@ model = bst
 
 
 layout = html.Div([
-    html.Div(dcc.Link("< Back to Selection", href="/input-specific", style={
+    html.Div(dcc.Link("< back to selection", href="/input-specific", style={
         'fontFamily': 'Inter, sans-serif', 'fontSize': '14px',
         'color': 'black', 'textDecoration': 'none'}), style={'margin': '20px'}),
 
