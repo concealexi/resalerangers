@@ -8,14 +8,14 @@ from models.model_tuning import conformal_predict
 from functions.get_transactions import get_transactions, get_block_transactions
 from functions.input_for_model import get_all_nearest_amenities  # assuming it's in functions
 
-register_page(__name__, path="/page-4")
+register_page(__name__, path="/output-specific")
 
 model_package = joblib.load("models/final_model.pkl")
 model = model_package['model']
 q_value = model_package['q_value']
 
 layout = html.Div([
-    html.Div(dcc.Link("< Back to Selection", href="/input-specific-dummy", style={
+    html.Div(dcc.Link("< Back to Selection", href="/input-specific", style={
         'fontFamily': 'Inter, sans-serif', 'fontSize': '14px',
         'color': 'black', 'textDecoration': 'none'}), style={'margin': '20px'}),
 
@@ -206,14 +206,28 @@ def update_chart(toggle_value, manual_data, guru_data):
     stored_records['full'] = full.to_dict('records')  # Used for row click
     bar_df = recent_year.copy()
     bar_df['quarter'] = pd.to_datetime(bar_df['month']).dt.to_period('Q').astype(str)
-    chart_data = bar_df.groupby('quarter')['adjusted_resale_price'].mean().reset_index()
+    chart_data = (
+        bar_df.groupby('quarter')
+        .agg(adjusted_resale_price=('adjusted_resale_price', 'mean'),
+            units_sold=('adjusted_resale_price', 'count'))
+        .reset_index()
+        .sort_values('quarter')
+        .tail(4)
+    )
+    chart_data['quarter'] = chart_data['quarter'].str.replace(r'(\d{4})Q(\d)', r'Q\2 \1', regex=True)
 
     fig = {
         "data": [{
             "x": chart_data['quarter'],
             "y": chart_data['adjusted_resale_price'],
+            "customdata": chart_data['units_sold'],
             "type": "bar",
-            "marker": {"color": "#7F0019"}
+            "marker": {"color": "#7F0019"},
+            "hovertemplate": (
+                "In %{x}<br>" +
+                "%{customdata} units sold<br>" +
+                "Average: $%{y:,.0f}<extra></extra>"
+            )
         }],
         "layout": {
             "title": None,
@@ -223,7 +237,17 @@ def update_chart(toggle_value, manual_data, guru_data):
             "xaxis": {"title": None},
             "yaxis": {"title": None},
             "paper_bgcolor": "white",
-            "plot_bgcolor": "white"
+            "plot_bgcolor": "white",
+            "hoverlabel": {
+                "font": {
+                    "family": "Inter, sans-serif",
+                    "size": 14,
+                    "color": "#333"
+                },
+                "bgcolor": "white",
+                "bordercolor": "#ddd",
+                "align": "left"
+            }
         }
     }
     if recent_year.empty:
@@ -233,17 +257,19 @@ def update_chart(toggle_value, manual_data, guru_data):
     avg_price = round(recent_year['adjusted_resale_price'].mean())
 
     stats_html = html.Div([
-        html.H4("Within the last year", style={"fontWeight": "700", "marginBottom": "20px"}),
-        html.P("Average Price", style={"fontStyle": "italic", "marginBottom": "0"}),
+        html.H4("Within the last year", style={"fontWeight": "700", "marginBottom": "15px"}),
+        html.P("Average Price", style={"fontWeight": "700", "marginBottom": "0"}),
         html.H3(f"${avg_price:,}", style={"fontWeight": "700", "marginTop": "5px"}),
-        html.P("Highest Sold", style={"marginBottom": "0", "marginTop": "20px"}),
-        html.Div([html.H4(f"${int(max_row['adjusted_resale_price']):,}",
-                          style={"display": "inline-block", "marginRight": "8px"}),
-                  html.Span(pd.to_datetime(max_row['month']).strftime("%b %Y"), style={"color": "#888"})]),
-        html.P("Lowest Sold", style={"marginBottom": "0", "marginTop": "20px"}),
-        html.Div([html.H4(f"${int(min_row['adjusted_resale_price']):,}",
-                          style={"display": "inline-block", "marginRight": "8px"}),
-                  html.Span(pd.to_datetime(min_row['month']).strftime("%b %Y"), style={"color": "#888"})])
+        html.P("Highest Sold", style={"fontWeight": "700", "marginBottom": "0", "marginTop": "20px"}),
+        html.Div([
+        html.H4(f"${int(max_row['adjusted_resale_price']):,}", style={"marginBottom": "2px"}),
+        html.Div(max_row['address'], style={"color": "black", "fontSize": "13px", "marginBottom": "2px"}),
+        html.Div(pd.to_datetime(max_row['month']).strftime("%b %Y"), style={"color": "#000", "fontSize": "14px"})]),
+        html.P("Lowest Sold", style={"fontWeight": "700", "marginBottom": "0", "marginTop": "20px"}),
+        html.Div([
+        html.H4(f"${int(min_row['adjusted_resale_price']):,}", style={"marginBottom": "2px"}),
+        html.Div(min_row['address'], style={"color": "black", "fontSize": "13px", "marginBottom": "2px"}),
+        html.Div(pd.to_datetime(min_row['month']).strftime("%b %Y"), style={"color": "#000", "fontSize": "14px"})])
     ])
 
     return fig, stats_html, top3.to_dict('records')
