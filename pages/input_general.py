@@ -268,3 +268,29 @@ def save_inputs_and_go(n_clicks, town1, town2, flat_type, floor_level, lease, di
         filter_data['max_dist_school'] = dist_school
 
     return filter_data, "/output-general"
+
+@callback(
+    Output('newbie-town-dropdown_2', 'options'),
+    Input('newbie-town-dropdown', 'value')
+)
+def update_second_town_options(town1_selected):
+    if not town1_selected:
+        return [{'label': town.title(), 'value': town} for town in towns]
+
+    return [
+        {'label': town.title(), 'value': town, 'disabled': town == town1_selected}
+        for town in towns
+    ]
+
+@callback(
+    Output('newbie-town-dropdown', 'options'),
+    Input('newbie-town-dropdown_2', 'value')
+)
+def update_first_town_options(town2_selected):
+    if not town2_selected:
+        return [{'label': town.title(), 'value': town} for town in towns]
+
+    return [
+        {'label': town.title(), 'value': town, 'disabled': town == town2_selected}
+        for town in towns
+    ]
