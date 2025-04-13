@@ -434,7 +434,7 @@ def get_all_nearest_amenities(postal_code, hdb_amenities_dist_with_postal, all_p
                 min_dist = dist
         return nearest
 
-    school = nearest_amenity(all_primary_schools, 'SchoolName')
+    school = nearest_amenity(all_primary_schools, 'school')
     mrt = nearest_amenity(mrt_stations, 'station_name')
     hawker = nearest_amenity(hawkercentrecoord, 'hc_name')
     cbd_dist = round(geodesic(hdb_coords, CBD_COORDS).km, 2)
@@ -464,7 +464,7 @@ def generate_map_markers(postal_code):
         return (row.iloc[0]['latitude'], row.iloc[0]['longitude']) if not row.empty else (None, None)
 
     mrt_lat, mrt_lon = find_coords(result["mrt"][0], mrt_df, 'station_name')
-    sch_lat, sch_lon = find_coords(result["school"][0], schools_df, 'SchoolName')
+    sch_lat, sch_lon = find_coords(result["school"][0], schools_df, 'school')
     hawker_lat, hawker_lon = find_coords(result["hawker"][0], hawker_df, 'hc_name')
 
     markers = []
