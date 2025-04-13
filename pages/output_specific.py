@@ -8,6 +8,7 @@ import pandas as pd
 from models.model_tuning import conformal_predict
 from functions.get_transactions import get_transactions, get_block_transactions
 from functions.input_for_model import get_all_nearest_amenities  
+import tempfile
 
 register_page(__name__, path="/output-specific")
 
