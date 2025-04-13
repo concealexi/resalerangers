@@ -2,7 +2,7 @@ from geopy.distance import geodesic
 import pandas as pd
 
 hdb_data = pd.read_csv("dataset/hdb_informations.csv")
-schools = pd.read_csv("dataset/geocoded_schools.csv")
+schools = pd.read_csv("dataset/all_primary_schools.csv")
 mrt_stations = pd.read_csv("dataset/mrt_stations.csv")
 hawkercentres = pd.read_csv("dataset/hawkercentercoord.csv")
 
