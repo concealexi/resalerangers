@@ -287,7 +287,12 @@ def update_chart(toggle_value, manual_data, guru_data):
         html.Div(pd.to_datetime(min_row['month']).strftime("%b %Y"), style={"color": "#000", "fontSize": "14px"})])
     ])
 
-    return fig, stats_html, top3.to_dict('records'), {"row": 0, "column": 0, "column_id": "month"}
+    top3_formatted = top3.copy()
+    top3_formatted['adjusted_resale_price'] = top3_formatted['adjusted_resale_price'].apply(
+        lambda x: f"${int(round(x)):,}"
+    )
+
+    return fig, stats_html, top3_formatted.to_dict('records'), {"row": 0, "column": 0, "column_id": "month"}
 
 # callback for bottom part of the page (property details and amenities)
 @callback(
