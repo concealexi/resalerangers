@@ -748,7 +748,7 @@ def update_table(filter_data, pathname):
         'num_transactions': 'Units Sold'
     })[['Address', 'Units Sold', 'Price Range']]
 
-    summary_df = summary_df.sort_values(by='Units Sold', ascending=False).head(5)
+    summary_df = summary_df.sort_values(by='Units Sold', ascending=False).head(10)
 
     if summary_df.empty:
         return html.Div("No results."), None, None
@@ -860,7 +860,7 @@ def update_table_town2(filter_data, pathname):
         'num_transactions': 'Units Sold'
     })[['Address', 'Units Sold', 'Price Range']]
 
-    summary_df = summary_df.sort_values(by='Units Sold', ascending=False).head(5)
+    summary_df = summary_df.sort_values(by='Units Sold', ascending=False).head(10)
 
 
     if summary_df.empty:
