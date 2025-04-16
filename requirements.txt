@@ -1,0 +1,17 @@
+dash
+dash-leaflet
+pandas
+numpy
+scikit-learn
+joblib
+geopy
+requests
+python-dotenv
+selenium
+beautifulsoup4
+tqdm
+xgboost-cpu==2.1.4
+gunicorn==20.1.0
+geopandas
+fake-useragent
+cloudscraper

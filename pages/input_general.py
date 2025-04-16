@@ -1,7 +1,7 @@
 import dash
 from dash import html, dcc, register_page, callback, Output, Input, State
 import pandas as pd
-import dash_leaflet as dl
+# import dash_leaflet as dl
 
 # Load and merge data
 hdb_df = pd.read_csv("dataset/hdb_final_dataset.csv")
@@ -12,183 +12,235 @@ hdb_df = pd.merge(hdb_df, hdb_info[['postal_code', 'max_floor_lvl']], on='postal
 towns = sorted(hdb_df['town'].dropna().unique())
 town_postal_map = hdb_df.groupby('town')['postal_code'].apply(list).to_dict()
 
+# Common styling
+
+common_input_style = {
+    'width': '100%',
+    'fontSize': '16px',
+    'marginBottom': '20px',
+    'fontFamily': 'Inter, sans-serif',
+    'padding': '10px',
+    'border': '1px solid #ccc',
+    'borderRadius': '4px',
+    'boxSizing': 'border-box',
+    'backgroundColor': 'white'
+}
+
+common_dropdown_style = {
+    'width': '100%',
+    'fontSize': '16px',
+    'marginBottom': '20px'
+}
+
 register_page(__name__, path="/input-general")
 
-layout = html.Div([
+layout = html.Div(children =[
     dcc.Location(id='url', refresh=True),
+    html.Div(
+            children=[
+                dcc.Link("< back to start", href="/", style={
+                    'fontFamily': 'Inter, sans-serif',
+                    'fontSize': '14px',
+                    'color': 'black',
+                    'textDecoration': 'none'
+                })
+            ],
+            style={'marginLeft': '20px', 'marginTop': '20px'}
+        ),
 
-
-    html.H2("What property are you looking for?", style={
-        'fontFamily': 'Helvetica', 'textAlign': 'center', 'marginBottom': '10px'
-    }),
-    html.H4("Please fill in the characteristics for the flat of your choice", style={
-        'fontFamily': 'Helvetica', 'textAlign': 'center', 'marginBottom': '30px'
-    }),
+    html.H1("What property are you looking for?",
+            style={
+                'textAlign': 'center',
+                'fontFamily': 'Inter, sans-serif',
+                'fontWeight': 'bold',
+                'fontSize': '2rem',
+                'marginTop': '10px',
+                'color': 'black'
+            }
+        ),
+    html.P(
+            "Please fill in the characteristics for the flat of your choice",
+            style={
+                'textAlign': 'center',
+                'fontFamily': 'Inter, sans-serif',
+                'fontSize': '1rem',
+                'marginBottom': '30px',
+                'color': 'black'
+            }
+        ),
 
     html.Div([
+        html.Label("Town", style={
+            'fontFamily': 'Inter, sans-serif',
+            'fontWeight': 'bold',
+            'marginBottom': '8px',
+            'display': 'block',
+            'textAlign': 'left'
+        }),
 
-        html.Label("Town", style={'fontFamily': 'Helvetica'}),
-        dcc.Dropdown(
-            id='newbie-town-dropdown',
-            options=[{'label': town.title(), 'value': town} for town in towns],
-            placeholder="Enter a town",
-            style={'marginBottom': '5px', 'fontFamily': 'Helvetica'}
-        ),
-        html.P("Looking to compare towns? You may select up to 2 to view!", style={
-            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Helvetica',
+        html.Div([
+            dcc.Dropdown(
+                id='newbie-town-dropdown',
+                options=[{'label': town.title(), 'value': town} for town in towns],
+                placeholder="Enter first town",
+                style={'width': '100%'}
+            ),
+            dcc.Dropdown(
+                id='newbie-town-dropdown_2',
+                options=[{'label': town.title(), 'value': town} for town in towns],
+                placeholder="Enter second town",
+                style={'width': '100%'}
+            )
+        ], style={
+            'display': 'flex',
+            'gap': '20px',
+            'justifyContent': 'space-between',
+            'marginBottom': '10px'
+        }),
+
+        html.P("Please select 2 towns to continue!", style={
+            'fontSize': '13px',
+            'color': '#777',
+            'fontFamily': 'Inter, sans-serif',
+            'textAlign': 'center',
             'marginBottom': '20px'
         }),
 
-        html.Label("Flat Type", style={'fontFamily': 'Helvetica'}),
+        html.Label("Flat Type", style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
         dcc.Dropdown(
             id='newbie-flat-type',
             options=[],
             placeholder='Enter flat type',
-            style={'marginBottom': '25px', 'fontFamily': 'Helvetica'}
+            style=common_dropdown_style
         ),
 
-        html.Label("Floor Level", style={'fontFamily': 'Helvetica'}),
+        html.Label("Floor Level", style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
         dcc.Dropdown(
             id='newbie-floor-level',
-            options=[],
+            options=[
+                {'label': 'Low', 'value': 'Low'},
+                {'label': 'Medium', 'value': 'Medium'},
+                {'label': 'High', 'value': 'High'}
+            ],
             placeholder='Enter floor level',
-            style={'marginBottom': '40px', 'fontFamily': 'Helvetica'}
+            style=common_dropdown_style
         ),
 
         html.H4("You may also add additional filters for your search!", style={
-            'fontFamily': 'Helvetica', 'marginBottom': '30px'
+            'fontFamily': 'Inter, sans-serif', 'marginBottom': '30px'
         }),
-
-        html.Label("Minimum Remaining Lease", style={'fontFamily': 'Helvetica'}),
+        html.Div([
+                html.Label('Minimum Remaining Lease (Year)', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
+                html.Div('0-99', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'})
+                    ], style={'display':'flex','justifyContent':'space-between','marginBottom':'10px'}),
         dcc.Slider(
             id='newbie-lease',
             min=0,
             max=99,
             step=1,
-            tooltip={'always_visible': False, 'placement': 'bottom'},
+            tooltip={'placement':'bottom'}, className='my-slider',
             marks={0: '0', 99: '99 years'},
         ),
-        html.P("Select a minimum remaining lease year", style={
-            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Helvetica',
+        html.P("Select how long the minimum remaining lease you want your unit to be", style={
+            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Inter, sans-serif',
             'marginBottom': '30px'
         }),
-
-        html.Label("Distance to an MRT", style={'fontFamily': 'Helvetica'}),
+        html.Div([
+                html.Label('Distance to nearest MRT (km)', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
+                html.Div('0-2.5', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'})
+                    ], style={'display':'flex','justifyContent':'space-between','marginBottom':'10px'}),
         dcc.Slider(
             id='newbie-dist-mrt',
             min=0,
             max=2.5,
             step=0.1,
-            tooltip={'always_visible': False, 'placement': 'bottom'},
+            tooltip={'placement':'bottom'}, className='my-slider',
             marks={0: '0', 2.5: '2.5km'},
         ),
         html.P("Select a maximum distance from the nearest available MRT", style={
-            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Helvetica',
-            'marginBottom': '30px'
-        }),
-
-        html.Label("Distance to a School", style={'fontFamily': 'Helvetica'}),
-        dcc.Slider(
-            id='newbie-dist-school',
-            min=0,
-            max=2,
-            step=0.1,
-            tooltip={'always_visible': False, 'placement': 'bottom'},
-            marks={0: '0', 2: '2km'},
-        ),
-        html.P("Select a maximum distance from the nearest available school", style={
-            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Helvetica',
+            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Inter, sans-serif',
             'marginBottom': '30px'
         }),
 
         html.Div([
-            html.Button("Submit", id="newbie-submit", n_clicks=0, style={
-                'backgroundColor': '#ff963b',
-                'color': 'white',
-                'padding': '10px 20px',
-                'border': '2px solid #e67e22',
-                'borderRadius': '8px',
-                'fontSize': '16px',
-                'cursor': 'pointer',
-                'fontFamily': 'Helvetica'
-            })
-        ], style={
-            'border': '2px solid #ccc',
-            'padding': '10px',
-            'borderRadius': '12px',
-            'backgroundColor': '#fffaf3',
-            'textAlign': 'center',
-            'width': 'fit-content',
-            'margin': '0 auto',
-            'fontFamily': 'Helvetica'
+                html.Label('Distance to nearest Primary School (km)', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
+                html.Div('0-2.5', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'})
+                    ], style={'display':'flex','justifyContent':'space-between','marginBottom':'10px'}),
+
+        dcc.Slider(
+            id='newbie-dist-school',
+            min=0,
+            max=2.5,
+            step=0.1,
+            tooltip={'placement':'bottom'}, className='my-slider',
+            marks={0: '0', 2.5: '2.5km'},
+        ),
+        html.P("Select a maximum distance from the nearest available school", style={
+            'fontSize': '13px', 'color': '#777', 'fontFamily': 'Inter, sans-serif',
+            'marginBottom': '30px'
         }),
 
-        html.Div(id='newbie-output', style={'marginTop': '30px', 'fontFamily': 'Helvetica'})
-    ], style={'width': '50%', 'margin': '0 auto', 'padding': '40px', 'fontFamily': 'Helvetica'})
-])
+        html.Div([
+            html.Button("See Units Now", id="newbie-submit", n_clicks=0, style={
+                    'padding': '10px 20px',
+                    'fontSize': '16px',
+                    'cursor': 'pointer',
+                    'backgroundColor': '#7F0019',
+                    'color': 'white',
+                    'fontFamily': 'Inter, sans-serif',
+                    'border': 'none',
+                    'borderRadius': '8px'
+                })
+        ], style={"textAlign": "center", "marginTop": "20px"}),
+
+        html.Div(id='newbie-output', style={'marginTop': '30px', 'fontFamily': 'Inter, sans-serif'})
+    ], style={'width': '50%', 'margin': '0 auto', 'padding': '40px', 'fontFamily': 'Inter, sans-serif'})
+],
+    style={
+        'backgroundColor': 'white',
+        'minHeight': '100vh',
+        'padding': '40px'
+    })
 
 # CALLBACKS
 
 @callback(
     Output('newbie-flat-type', 'options'),
-    Input('newbie-town-dropdown', 'value')
+    Input('newbie-town-dropdown', 'value'),
+    Input('newbie-town-dropdown_2', 'value')
 )
-def update_flat_type_options(town):
-    if not town:
+def update_flat_type_options(town1, town2):
+    if not town1 or not town2:
         return []
 
-    filtered = hdb_df[hdb_df['town'] == town]
+    filtered1 = hdb_df[hdb_df['town'] == town1]
+    filtered2 = hdb_df[hdb_df['town'] == town2]
+
     flat_type_cols = [
         'flat_type_1 ROOM', 'flat_type_2 ROOM', 'flat_type_3 ROOM',
         'flat_type_4 ROOM', 'flat_type_5 ROOM',
         'flat_type_EXECUTIVE', 'flat_type_MULTI-GENERATION'
     ]
 
-    type_counts = filtered[flat_type_cols].sum()
+    counts1 = filtered1[flat_type_cols].sum()
+    counts2 = filtered2[flat_type_cols].sum()
+
+    # Only keep flat types that exist in both towns
+    common_cols = counts1[(counts1 > 0) & (counts2 > 0)].index.tolist()
 
     return [
         {'label': col.replace('flat_type_', '').replace('_', ' ').title(), 'value': col.replace('flat_type_', '')}
-        for col, val in type_counts.items() if val > 0
+        for col in common_cols
     ]
 
-@callback(
-    Output('newbie-floor-level', 'options'),
-    Input('newbie-town-dropdown', 'value'),
-    Input('newbie-flat-type', 'value')
-)
-def update_floor_categories(town, flat_type):
-    if not town or not flat_type:
-        return []
 
-    flat_col = f"flat_type_{flat_type.upper()}"
-    filtered = hdb_df[
-        (hdb_df['town'] == town) &
-        (hdb_df[flat_col] == 1)
-    ]
-
-    if filtered.empty:
-        return []
-
-    try:
-        max_floor = int(filtered['max_floor_lvl'].dropna().mode()[0])
-    except:
-        return []
-
-    low = list(range(1, int(round(max_floor * 0.25)) + 1))
-    medium = list(range(int(round(max_floor * 0.25)) + 1, int(round(max_floor * 0.75)) + 1))
-    high = list(range(int(round(max_floor * 0.75)) + 1, max_floor + 1))
-
-    return [
-        {'label': f"Low (Floors {low[0]:02d}–{low[-1]:02d})", 'value': 'Low'},
-        {'label': f"Medium (Floors {medium[0]:02d}–{medium[-1]:02d})", 'value': 'Medium'},
-        {'label': f"High (Floors {high[0]:02d}–{high[-1]:02d})", 'value': 'High'}
-    ]
 
 @callback(
     Output('user-filter-store', 'data'),
     Output('url', 'pathname'),
     Input('newbie-submit', 'n_clicks'),
     State('newbie-town-dropdown', 'value'),
+    State('newbie-town-dropdown_2', 'value'),
     State('newbie-flat-type', 'value'),
     State('newbie-floor-level', 'value'),
     State('newbie-lease', 'value'),
@@ -196,20 +248,14 @@ def update_floor_categories(town, flat_type):
     State('newbie-dist-school', 'value'),
     prevent_initial_call=True
 )
-def save_inputs_and_go(n_clicks, town, flat_type, floor_level, lease, dist_mrt, dist_school):
-    print("🧪 Debug Info:")
-    print("Town:", town)
-    print("Flat Type:", flat_type)
-    print("Floor Level:", floor_level)
-    print("Remaining Lease:", lease)
-    print("Max Distance to MRT:", dist_mrt)
-    print("Max Distance to School:", dist_school)
+def save_inputs_and_go(n_clicks, town1, town2, flat_type, floor_level, lease, dist_mrt, dist_school):
 
-    if not town or not flat_type or not floor_level:
+    if not town1 or not town2 or not flat_type or not floor_level:
         return dash.no_update, dash.no_update
 
     filter_data = {
-        'town': town,
+        'town1': town1,
+        'town2': town2,
         'flat_type': flat_type,
         'floor_level': floor_level
     }
@@ -221,5 +267,30 @@ def save_inputs_and_go(n_clicks, town, flat_type, floor_level, lease, dist_mrt, 
     if dist_school is not None:
         filter_data['max_dist_school'] = dist_school
 
-    print("✅ Final filter_data:", filter_data)
     return filter_data, "/output-general"
+
+@callback(
+    Output('newbie-town-dropdown_2', 'options'),
+    Input('newbie-town-dropdown', 'value')
+)
+def update_second_town_options(town1_selected):
+    if not town1_selected:
+        return [{'label': town.title(), 'value': town} for town in towns]
+
+    return [
+        {'label': town.title(), 'value': town, 'disabled': town == town1_selected}
+        for town in towns
+    ]
+
+@callback(
+    Output('newbie-town-dropdown', 'options'),
+    Input('newbie-town-dropdown_2', 'value')
+)
+def update_first_town_options(town2_selected):
+    if not town2_selected:
+        return [{'label': town.title(), 'value': town} for town in towns]
+
+    return [
+        {'label': town.title(), 'value': town, 'disabled': town == town2_selected}
+        for town in towns
+    ]
