@@ -207,7 +207,7 @@ layout = html.Div([
 
     html.Div(id='bar-chart-section', children=[
         html.H3("Price trends for properties in the area", style={
-            'textAlign': 'left', 'fontFamily': 'Inter, sans-serif', 'marginTop': '20px'
+            'textAlign': 'left', 'fontFamily': 'Inter, sans-serif', 'marginTop': '20px', 'fontSize' : '30px'
         }),
         html.P(id='bar-chart-subtitle', style={
             'textAlign': 'left', 'fontFamily': 'Inter, sans-serif',
@@ -270,7 +270,7 @@ layout = html.Div([
     }),
 
     html.Div([
-            html.H3("Popular Units with Most Recent Transactions by Town", style={
+            html.H3("Most Popular Blocks in the Past Year", style={
                 'textAlign': 'left',
                 'fontFamily': 'Inter, sans-serif',
                 'fontSize': '28px',
@@ -748,7 +748,7 @@ def update_table(filter_data, pathname):
         'num_transactions': 'Units Sold'
     })[['Address', 'Units Sold', 'Price Range']]
 
-    summary_df = summary_df.sort_values(by='Units Sold', ascending=False).head(10)
+    summary_df = summary_df.sort_values(by='Units Sold', ascending=False).head(5)
 
     if summary_df.empty:
         return html.Div("No results."), None, None
@@ -860,7 +860,7 @@ def update_table_town2(filter_data, pathname):
         'num_transactions': 'Units Sold'
     })[['Address', 'Units Sold', 'Price Range']]
 
-    summary_df = summary_df.sort_values(by='Units Sold', ascending=False).head(10)
+    summary_df = summary_df.sort_values(by='Units Sold', ascending=False).head(5)
 
 
     if summary_df.empty:
