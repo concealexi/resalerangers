@@ -1,5 +1,5 @@
 # HDB Resale Radar App
-<img src="assets/applogo.png" alt="App Logo" width="200" height="100"/>
+<img src="assets/applogo.png" alt="App Logo" width="200" height="200"/>
 
 Authors: Team Resale Rangers
 
