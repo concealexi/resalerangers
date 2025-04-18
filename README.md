@@ -1,5 +1,5 @@
-# HDB Resale Insight App
-![App Logo](assets/applogo.png)
+# HDB Resale Radar App
+<img src="assets/applogo.png" alt="App Logo" width="200" height="100"/>
 
 Authors: Team Resale Rangers
 
@@ -22,8 +22,17 @@ The data is available on [data.gov.sg] (https://data.gov.sg/).
 **Visualization:** plotly
 
 
+# How to run the app locally
+1. **Clone this repository**
+2. **Ensure Python 3.7+ is installed**
+3. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+4. **Run App!**
 
-
+   ```bash
+   python app.py
+5. **Open the link in the terminal in your browser**
 
 # backend folder 
 
