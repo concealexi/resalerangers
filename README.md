@@ -25,9 +25,9 @@ The data is available on [data.gov.sg] (https://data.gov.sg/).
 
 
 
-# HDB Resale Price Prediction Project
+# backend folder 
 
-This repository contains our end-to-end pipeline for predicting HDB resale prices in Singapore using Random Forest and XGBoost, with enhancements like geospatial feature engineering, asymmetric loss functions, and conformal prediction for uncertainty quantification.
+This directory contains our end-to-end pipeline for predicting HDB resale prices in Singapore using Random Forest and XGBoost, with enhancements like geospatial feature engineering, asymmetric loss functions, and conformal prediction for uncertainty quantification.
 
 ---
 
