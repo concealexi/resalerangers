@@ -77,7 +77,7 @@ This notebook walks through the full pipeline:
 
    ```bash
    pip install -r requirements.txt
-
+2. **follow the instruction in the notebook**
 
 ##  Technologies (Modelling)
 
