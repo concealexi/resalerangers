@@ -5,9 +5,6 @@ from dotenv import load_dotenv
 import re
 from selenium import webdriver
 from bs4 import BeautifulSoup, Comment
-# from selenium.webdriver.common.by import By
-# from selenium.webdriver.support.ui import WebDriverWait
-# from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
 from datetime import datetime
 import cloudscraper
@@ -195,7 +192,11 @@ def scraper_guru(link):
         print("[FAILURE] All attempts failed. Could not scrape the listing.")
 
     return result
-
+### ----------------------------------------------------------- END -------------------------------------------------------------------------------------
+### Initial scraper, can try this for selenium
+# from selenium.webdriver.common.by import By
+# from selenium.webdriver.support.ui import WebDriverWait
+# from selenium.webdriver.support import expected_conditions as EC
 # def scraper_guru(input_link):
 #     # --- Step 1: Launch browser and scrape page ---
 #     options = webdriver.ChromeOptions()
