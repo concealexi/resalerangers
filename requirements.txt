@@ -15,3 +15,5 @@ gunicorn==20.1.0
 geopandas
 fake-useragent
 cloudscraper
+matplotlib>=3.4.0
+seaborn>=0.11.0
