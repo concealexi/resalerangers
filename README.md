@@ -32,10 +32,14 @@ The data is available on [data.gov.sg] (https://data.gov.sg/).
 
    ```bash
    python app.py
+   # or
+   python3 app.py
 5. **Open the link in the terminal in your browser**
-   
-It should be in the form similar to http://127.0.0.1:8050
-# backend folder 
+
+   It should look something like:
+
+   ```text
+   http://127.0.0.1:8050# backend folder 
 
 This directory contains our end-to-end pipeline for predicting HDB resale prices in Singapore using Random Forest and XGBoost, with enhancements like geospatial feature engineering, asymmetric loss functions, and conformal prediction for uncertainty quantification.
 
