@@ -3,11 +3,10 @@ import os
 import time
 from dotenv import load_dotenv
 import re
-from selenium import webdriver
-from bs4 import BeautifulSoup
 
-os.environ['ONEMAP_EMAIL'] = "e0969983@u.nus.edu"
-os.environ['ONEMAP_EMAIL_PASSWORD'] = "Riceword2002"
+
+os.environ['ONEMAP_EMAIL'] = "resaleranger1@gmail.com"
+os.environ['ONEMAP_EMAIL_PASSWORD'] = "Denisthegoat3101"
 
 # Load environment variables
 load_dotenv()
