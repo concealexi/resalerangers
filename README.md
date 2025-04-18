@@ -39,7 +39,7 @@ The data is available on [data.gov.sg] (https://data.gov.sg/).
    It should look something like:
 
    ```text
-   http://127.0.0.1:8050# backend folder 
+   http://127.0.0.1:8050
 
 This directory contains our end-to-end pipeline for predicting HDB resale prices in Singapore using Random Forest and XGBoost, with enhancements like geospatial feature engineering, asymmetric loss functions, and conformal prediction for uncertainty quantification.
 
