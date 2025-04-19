@@ -26,8 +26,8 @@
 }
 
 .my-dropdown .Select-value-label {
-    margin: 10px !important;       /* match your placeholder's margin */
-    padding: 4px 0 0 !important;   /* match your placeholder's padding */
+    margin: 10px !important;       
+    padding: 4px 0 0 !important;   
     line-height: normal !important;
     font-family: 'Inter', sans-serif !important;
     color: #757575 !important;
