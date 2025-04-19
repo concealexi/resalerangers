@@ -13,42 +13,23 @@ import plotly.graph_objects as go
 register_page(__name__, path="/output-general")
 
 # Constants
-CBD_COORDS = (1.287953, 103.851784)
+CBD_COORDS = (1.287953, 103.851784) # Used for distance to CBD
 
 # Load data
-hdb_df = pd.read_csv("dataset/hdb_final_dataset.csv", dtype={"postal_code": str})
-hdb_info = pd.read_csv("dataset/hdb_informations.csv", dtype={"postal_code": str})
-schools_df = pd.read_csv("dataset/all_primary_schools.csv")
-mrt_df = pd.read_csv("dataset/mrt_stations.csv")
-hawker_df = pd.read_csv("dataset/hawkercentercoord.csv")
+hdb_df = pd.read_csv("dataset/hdb_final_dataset.csv", dtype={"postal_code": str}) # Resale transaction dataset
+hdb_info = pd.read_csv("dataset/hdb_informations.csv", dtype={"postal_code": str}) # Dataset containing additional property details of HDB flats
+schools_df = pd.read_csv("dataset/all_primary_schools.csv") # Dataset of all primary schools
+mrt_df = pd.read_csv("dataset/mrt_stations.csv") # Dataset of all MRT exits
+hawker_df = pd.read_csv("dataset/hawkercentercoord.csv") # Dataset of all hawker centers
 
 
-# Merge data
+# Merge data to introduce max_floor_lvl into hdb resale dataset
 hdb_df['postal_code'] = hdb_df['postal_code'].astype(str).str.zfill(6)
 hdb_info['postal_code'] = hdb_info['postal_code'].astype(str).str.zfill(6)
 hdb_df = pd.merge(hdb_df, hdb_info[['postal_code', 'max_floor_lvl']], on='postal_code', how='left')
 hdb_df = hdb_df[hdb_df['max_floor_lvl'].notna()]
 
-town_chip_style = {
-    "padding": "8px 20px",
-    "border": "1.5px solid #7F0019",
-    "borderRadius": "999px",
-    "fontWeight": "600",
-    "fontSize": "16px",
-    "color": "#1A1A1A",
-    "backgroundColor": "white"
-}
-
-icon_style = {
-    "fontSize": "22px",
-    "width": "30px"
-}
-
-label_style = {
-    "fontSize": "16px",
-    "marginLeft": "10px"
-}
-
+# Styling for rows
 row_style = {
     "display": "flex",
     "alignItems": "center",
@@ -80,6 +61,7 @@ hawker_icon = {
 layout = html.Div([
     dcc.Location(id='url'),
     dcc.Store(id='map-center-store', storage_type='memory'),
+    # Back to start button
     html.Div(
         dcc.Link("< back to start", href="/", style={
             'fontFamily': 'Inter, sans-serif',
@@ -95,10 +77,10 @@ layout = html.Div([
             'marginBottom': '40px'
         }
     ),
+    # Restating the selected towns 
     html.H3("You selected 2 towns", style={
         'fontFamily': 'Inter, sans-serif', 'textAlign': 'left'
     }),
-
     html.Div([
         html.Div([
             html.Img(
@@ -148,7 +130,8 @@ layout = html.Div([
         'marginBottom': '20px',
         'fontFamily': 'Inter, sans-serif'
     }),
-
+    
+    # Restating feature filters: flat type, floor level, remaining lease, distance to primary school
     html.H3("With features", style={
     'fontFamily': 'Inter, sans-serif', 'textAlign': 'left', 'marginBottom': '20px'
 }),
@@ -204,7 +187,7 @@ layout = html.Div([
         'fontSize': '16px',
         'fontFamily': 'Inter, sans-serif'
     }),
-
+    # Title for bar chart
     html.Div(id='bar-chart-section', children=[
         html.H3("Price trends for properties in the area", style={
             'textAlign': 'left', 'fontFamily': 'Inter, sans-serif', 'marginTop': '20px', 'fontSize' : '30px'
@@ -218,7 +201,7 @@ layout = html.Div([
             'fontFamily': 'Inter, sans-serif', 'fontSize': '16px'
         }),
     ]),
-
+    # Toggle for summary to choose between towns
     html.Div([
         html.H4("Select which summary to view:", style={
             'fontFamily': 'Inter, sans-serif', 'marginBottom': '20px'
@@ -236,7 +219,7 @@ layout = html.Div([
         'textAlign': 'left', 'marginTop': '20px',
         'marginBottom': '20px', 'fontFamily': 'Inter, sans-serif'
     }),
-
+    # Bar chart for transaction averages quarterly
     html.Div([
         html.Div([
             dcc.Graph(id="quarterly-bar-chart", config={'displayModeBar': False}, style={"height": "100%", "width": "100%"})
@@ -268,7 +251,7 @@ layout = html.Div([
         "marginTop": "20px",
         "alignItems": "stretch"
     }),
-
+    # Title for popular transaction table
     html.Div([
             html.H3("Most Popular Blocks in the Past Year", style={
                 'textAlign': 'left',
@@ -284,7 +267,7 @@ layout = html.Div([
                 'color': '#555',
                 'marginBottom': '30px'
             }),
-
+            # Transaction tables listing out the 10 most popular houses transacted
             html.Div([
                 html.Div([
                     html.H4(id='town1-name', style={
@@ -319,12 +302,12 @@ layout = html.Div([
                 ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top', 'marginLeft': '4%'})
             ])
         ]),
-
+    # Storing the selected address
     dcc.Store(id='selected-postal-store'),
     dcc.Store(id='selected-postal-store-town2'),
 
     html.Hr(),
-
+    # Property details of each town
     html.Div([
         html.Div([
             html.H3("Property details", style={
@@ -372,6 +355,7 @@ layout = html.Div([
         'gap': '20px',
         'marginTop': '30px'
     }),
+    # Map of the property along with nearby amenities
     html.Div([
         html.H3("Map of Nearby Amenities", style={
             'textAlign': 'Left',
@@ -415,7 +399,7 @@ layout = html.Div([
 })
 
 
-# Utility function
+# Function to capture all of the nearest amenities
 def get_all_nearest_amenities(postal_code, hdb_amenities_dist_with_postal, all_primary_schools, mrt_stations, hawkercentrecoord):
     coord_row = hdb_amenities_dist_with_postal[hdb_amenities_dist_with_postal['postal_code'] == postal_code]
     if coord_row.empty:
@@ -447,6 +431,7 @@ def get_all_nearest_amenities(postal_code, hdb_amenities_dist_with_postal, all_p
         'address': coord_row.iloc[0]['address']
     }
 
+# Function to generate map coordinates for nearby amenities of a given postal code
 def generate_map_markers(postal_code):
     result = get_all_nearest_amenities(postal_code, hdb_df, schools_df, mrt_df, hawker_df)
     if result is None:
@@ -458,7 +443,7 @@ def generate_map_markers(postal_code):
 
     hdb_lat = hdb_row.iloc[0]['latitude']
     hdb_lon = hdb_row.iloc[0]['longitude']
-
+    # Finding coords inside of a dataframe
     def find_coords(name, df, name_col):
         row = df[df[name_col] == name]
         return (row.iloc[0]['latitude'], row.iloc[0]['longitude']) if not row.empty else (None, None)
@@ -479,12 +464,13 @@ def generate_map_markers(postal_code):
 
     return markers, [hdb_lat, hdb_lon]
 
+# Callback function taking in inputs from the previous page, and generates a bar chart, price summary, and restates the filters
 @callback(
     Output('quarterly-bar-chart', 'figure'),
     Output('price-summary-container', 'children'),
     Output('bar-chart-subtitle', 'children'),
     Output('town-filter', 'children'),
-    Output('town-filter-2', 'children'),  # ✅ Add this line
+    Output('town-filter-2', 'children'), 
     Output('feature-filter-flat-type', 'children'),
     Output('feature-filter-floor', 'children'),
     Output('feature-filter-lease', 'children'),
@@ -496,8 +482,8 @@ def generate_map_markers(postal_code):
 
 def update_quarterly_chart(filter_data, summary_toggle):
     if not filter_data:
-        raise dash.exceptions.PreventUpdate
-
+        raise dash.exceptions.PreventUpdate # Error handling if no inputs were given
+    # Getting relevant filters from the input
     df = hdb_df.copy()
     town = filter_data.get('town1')
     town2 = filter_data.get('town2')
@@ -509,15 +495,15 @@ def update_quarterly_chart(filter_data, summary_toggle):
     max_mrt = filter_data.get('max_dist_mrt')
     max_sch = filter_data.get('max_dist_school')
     flat_type_col = f"flat_type_{flat_type}"
-
+    # Filtering by town
     df1 = df[(df['town'] == town) & (df[flat_type_col] == 1)].copy()
     df2 = df[(df['town'] == town2) & (df[flat_type_col] == 1)].copy()
-
+    # Converting the floors by using storey median
     for dfx in [df1, df2]:
         dfx['storey_median'] = pd.to_numeric(dfx['storey_median'], errors='coerce')
         dfx['low_threshold'] = (dfx['max_floor_lvl'] * 0.25).round()
         dfx['high_threshold'] = (dfx['max_floor_lvl'] * 0.75).round()
-
+        # Classifying the floor level as low, median, or high
         def classify_floor(row):
             if pd.isna(row['storey_median']) or pd.isna(row['max_floor_lvl']):
                 return None
@@ -529,7 +515,7 @@ def update_quarterly_chart(filter_data, summary_toggle):
                 return "Medium"
 
         dfx['floor_category'] = dfx.apply(classify_floor, axis=1)
-
+    # Filtering if matches floor level, lease, MRT and school distance
     if floor_level:
         df1 = df1[df1['floor_category'] == floor_level]
         df2 = df2[df2['floor_category'] == floor_level]
@@ -542,15 +528,15 @@ def update_quarterly_chart(filter_data, summary_toggle):
     if max_sch:
         df1 = df1[df1['min_dist_sch'] <= max_sch]
         df2 = df2[df2['min_dist_sch'] <= max_sch]
-
+    # Converting months to quarters
     months = [f"{y}-{m:02d}" for y in [2024, 2025] for m in range(1, 13)][3:15]
     month_to_q = {m: f"Q{((int(m[5:7]) - 1) // 3) + 1} {m[:4]}" for m in months}
-
+    # Grouping transactions by quarters
     df1 = df1[df1['month'].isin(months)]
     df2 = df2[df2['month'].isin(months)]
     df1['Quarter'] = df1['month'].map(month_to_q)
     df2['Quarter'] = df2['month'].map(month_to_q)
-
+    # Function to compute quarter average
     def compute_q_avg(df, town_label):
         quarters = ['Q2 2024', 'Q3 2024', 'Q4 2024', 'Q1 2025']
         if df.empty:
@@ -574,14 +560,14 @@ def update_quarterly_chart(filter_data, summary_toggle):
     q_avg1, df1_valid = compute_q_avg(df1, town.title())
     q_avg2, df2_valid = compute_q_avg(df2, town2.title())
     combined_avg = pd.concat([q_avg1, q_avg2])
-
+    # Color aethetics of bar chart
     color_map = {
         town.title(): "#7F0019",
         town2.title(): "#e6ab2d"
     }
 
     fig = go.Figure()
-
+    # Making the bar chart
     for town_name in [town.title(), town2.title()]:
         df_town = combined_avg[combined_avg['Town'] == town_name]
 
@@ -621,7 +607,7 @@ def update_quarterly_chart(filter_data, summary_toggle):
             align="left"
         )
     )
-
+    # Building the summary statistics of transactions with given filters
     def build_summary(df, town_name):
         if df is None or df.empty:
             return html.Div("No data available.")
@@ -652,7 +638,7 @@ def update_quarterly_chart(filter_data, summary_toggle):
     subtitle = f"Based on flats in {town.title()} and {town2.title()} with {flat_type.title()} flat type and same amenity features"
     selected_summary = summary1 if summary_toggle == 'town1' else summary2
 
-    # Return plain text values
+    # Return figures, summary, subtitle, anbd plain text values
     return (
         fig,
         selected_summary,
@@ -666,7 +652,7 @@ def update_quarterly_chart(filter_data, summary_toggle):
         f"{max_sch} km" if max_sch else ""
     )
 
-# Callback to filter and display table
+# Callback to filter and display the table of the first town
 @callback(
     Output('filter-table-town1', 'children'),
     Output('selected-postal-store', 'data'),
@@ -677,7 +663,7 @@ def update_quarterly_chart(filter_data, summary_toggle):
 def update_table(filter_data, pathname):
     if pathname != "/output-general" or not filter_data:
         return html.Div("No data."), None, None
-
+    # Get filters of first town
     town = filter_data.get('town1')
     flat_type = filter_data.get('flat_type')
     floor_level = filter_data.get('floor_level')
@@ -685,7 +671,7 @@ def update_table(filter_data, pathname):
     max_mrt = filter_data.get('max_dist_mrt')
     max_sch = filter_data.get('max_dist_school')
     flat_type_col = f"flat_type_{flat_type}"
-
+    
     df = hdb_df[
         (hdb_df['town'] == town) &
         (hdb_df[flat_type_col] == 1)
@@ -708,7 +694,7 @@ def update_table(filter_data, pathname):
 
     df['floor_category'] = df.apply(classify_floor, axis=1)
 
-    # Apply filters
+    # Apply selected
     if floor_level:
         df = df[df['floor_category'] == floor_level]
     if lease:
@@ -718,7 +704,7 @@ def update_table(filter_data, pathname):
     if max_sch:
         df = df[df['min_dist_sch'] <= max_sch]
 
-    # Create address field
+    # Create an address field
     df['address'] = df['block'].astype(str).str.strip() + " " + df['street_name'].str.title()
 
     # Filter to transactions from last year only
@@ -752,7 +738,7 @@ def update_table(filter_data, pathname):
 
     if summary_df.empty:
         return html.Div("No results."), None, None
-
+    # Returns a data table, with styling
     return dash_table.DataTable(
         id='transaction-table-town1',
         columns=[{"name": i, "id": i} for i in summary_df.columns],
@@ -783,7 +769,7 @@ def update_table(filter_data, pathname):
     ), df.to_dict('records'), {'row': 0, 'column': 0, 'column_id': summary_df.columns[0]}
 
 
-
+# Callback to filter and display the table of the second town
 @callback(
     Output('filter-table-town2', 'children'),
     Output('selected-postal-store-town2', 'data'),
@@ -794,7 +780,7 @@ def update_table(filter_data, pathname):
 def update_table_town2(filter_data, pathname):
     if pathname != "/output-general" or not filter_data or not filter_data.get("town2"):
         return html.Div("No data."), None, None
-
+    # Get filters of first town
     town2 = filter_data.get('town2')
     flat_type = filter_data.get('flat_type')
     floor_level = filter_data.get('floor_level')
@@ -802,7 +788,7 @@ def update_table_town2(filter_data, pathname):
     max_mrt = filter_data.get('max_dist_mrt')
     max_sch = filter_data.get('max_dist_school')
     flat_type_col = f"flat_type_{flat_type}"
-
+    # Filter to transactons of given town and flat type first
     df = hdb_df[
         (hdb_df['town'] == town2) &
         (hdb_df[flat_type_col] == 1)
@@ -811,7 +797,7 @@ def update_table_town2(filter_data, pathname):
     df['storey_median'] = pd.to_numeric(df['storey_median'], errors='coerce')
     df['low_threshold'] = (df['max_floor_lvl'] * 0.25).round()
     df['high_threshold'] = (df['max_floor_lvl'] * 0.75).round()
-
+    # Same function on classifying floors as before
     def classify_floor(row):
         if pd.isna(row['storey_median']) or pd.isna(row['max_floor_lvl']):
             return None
@@ -823,7 +809,7 @@ def update_table_town2(filter_data, pathname):
             return "Medium"
 
     df['floor_category'] = df.apply(classify_floor, axis=1)
-
+    # Filter by other inputs
     if floor_level:
         df = df[df['floor_category'] == floor_level]
     if lease:
@@ -832,19 +818,19 @@ def update_table_town2(filter_data, pathname):
         df = df[df['min_dist_mrt'] <= max_mrt]
     if max_sch:
         df = df[df['min_dist_sch'] <= max_sch]
-
+    # Make addressx
     df['address'] = df['block'].astype(str).str.strip() + " " + df['street_name'].str.title()
 
     # Filter to last year
     valid_months = [f"{y}-{m:02d}" for y in [2024, 2025] for m in range(1, 13)][3:15]
     df = df[df['month'].isin(valid_months)]
-
+    # Creating summary statistics
     summary_df = df.groupby('address').agg(
         num_transactions=('adjusted_resale_price', 'count'),
         min_price=('adjusted_resale_price', 'min'),
         max_price=('adjusted_resale_price', 'max')
     ).reset_index()
-
+    # State price ranges
     summary_df['Price Range'] = summary_df.apply(
     lambda row: (
         f"${int(row['min_price']):,} - ${int(row['max_price']):,}"
@@ -859,13 +845,13 @@ def update_table_town2(filter_data, pathname):
         'address': 'Address',
         'num_transactions': 'Units Sold'
     })[['Address', 'Units Sold', 'Price Range']]
-
+    # Show 10 most popular sorted by number of units sold
     summary_df = summary_df.sort_values(by='Units Sold', ascending=False).head(10)
 
 
     if summary_df.empty:
         return html.Div("No results."), None, None
-
+    
     return dash_table.DataTable(
         id='transaction-table-town2',
         columns=[{"name": i, "id": i} for i in summary_df.columns],
@@ -895,7 +881,7 @@ def update_table_town2(filter_data, pathname):
         selected_rows=[],
         page_size=10
     ), df.to_dict('records'),  {'row': 0, 'column': 0, 'column_id': summary_df.columns[0]}
-
+# Function to ease making markers of nearest amenities
 def make_amenity(icon, title, value):
     return html.Div([
         html.Img(src=f"/assets/{icon}", style={
@@ -913,7 +899,7 @@ def make_amenity(icon, title, value):
         "display": "flex", "alignItems": "flex-start", "marginBottom": "20px"
     })
 
-# Callback to update details on click
+# Callback to update details on click on first town
 @callback(
     Output('property-amenities-container', 'children'),
     Input('transaction-table-town1', 'active_cell'),
@@ -936,7 +922,7 @@ def display_details_split(active_cell, table_data, original_data):
     result = get_all_nearest_amenities(postal, hdb_df, schools_df, mrt_df, hawker_df)
     if result is None:
         return html.Div("⚠️ Unable to retrieve details.")
-
+    # List of amenities
     amenities = [
         make_amenity("location_marker.svg", "Address", result['address']),
         make_amenity("mrt.svg", "Nearest MRT", f"{result['mrt'][0]}, {result['mrt'][1]} km"),
@@ -946,7 +932,7 @@ def display_details_split(active_cell, table_data, original_data):
     ]
     return amenities
 
-
+# Callback to update details on click on second town, same as first town
 @callback(
     Output('property-amenities-container-town2', 'children'),
     Input('transaction-table-town2', 'active_cell'),
@@ -969,7 +955,7 @@ def display_details_split_town2(active_cell, table_data, original_data):
     result = get_all_nearest_amenities(postal, hdb_df, schools_df, mrt_df, hawker_df)
     if result is None:
         return html.Div("⚠️ Unable to retrieve details.")
-
+    
     amenities = [
         make_amenity("location_marker.svg", "Address", result['address']),
         make_amenity("mrt.svg", "Nearest MRT", f"{result['mrt'][0]}, {result['mrt'][1]} km"),
@@ -979,6 +965,7 @@ def display_details_split_town2(active_cell, table_data, original_data):
     ]
     return amenities
 
+# Callback to update map with respect to clicked transaction on the first town
 @callback(
     Output('map-markers', 'children'),
     Output('amenity-map', 'center'),
@@ -1000,6 +987,7 @@ def update_map_and_center(active_cell, table_data, original_data):
 
     return generate_map_markers(postal_code)
 
+# Callback to update map with respect to clicked transaction on the second town
 @callback(
     Output('map-markers-town2', 'children'),
     Output('amenity-map-town2', 'center'),
@@ -1021,6 +1009,7 @@ def update_map_and_center_town2(active_cell, table_data, original_data):
 
     return generate_map_markers(postal_code)
 
+# Defines an active cell, so that when users enter the page the first row of town 1 is already clicked
 @callback(
     Output('transaction-table-town1', 'style_data_conditional'),
     Input('transaction-table-town1', 'active_cell')
@@ -1046,6 +1035,7 @@ def style_active_row_town1(active_cell):
         })
     return style
 
+# Same function as before, but for town 2
 @callback(
     Output('transaction-table-town2', 'style_data_conditional'),
     Input('transaction-table-town2', 'active_cell')
@@ -1071,6 +1061,7 @@ def style_active_row_town2(active_cell):
         })
     return style
 
+# Callback to state the name of the towns in the toggle bar for the summary
 @callback(
     Output('summary-toggle', 'options'),
     Output('summary-toggle', 'value'),
@@ -1089,6 +1080,7 @@ def update_toggle_options(filter_data):
 
     return options, 'town1'
 
+# Callback to extract town names
 @callback(
     Output('town1-name', 'children'),
     Output('town2-name', 'children'),
