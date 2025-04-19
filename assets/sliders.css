@@ -1,6 +1,6 @@
 /* Make the rail (unselected portion) gray */
 .my-slider [class*="rc-slider-rail"] {
-    background-color: #ccc !important; /* or any gray shade you like */
+    background-color: #ccc !important;
     height: 6px !important; 
 }
 
@@ -19,7 +19,7 @@
     border: none !important;
     width: 16px !important;
     height: 16px !important;
-    margin-top: -5px !important; /* center vertically if track is 6px tall */
+    margin-top: -5px !important; 
     cursor: pointer;
 }
 
