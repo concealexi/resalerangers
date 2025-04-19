@@ -187,7 +187,7 @@ This notebook walks through the full pipeline:
   Penalizes **underpredictions** more heavily than **overpredictions**
 
 - **Parameter:**
-  - `alpha` controls the severity of the penalty  
+  - `alpha` controls the severity of the penalty  (customisable)
     - e.g., `alpha = 3` → underpredicting by $10k = overpredicting by $30k
 
 - **Impact:**  
@@ -206,5 +206,9 @@ This notebook walks through the full pipeline:
 - **Function Signature:**
   ```python
   conformal_predict(model, X_input, q)
+
+  - **Customisation:**
+  q, for desired level of confidence.
+  
 
 
