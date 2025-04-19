@@ -16,7 +16,7 @@ The data is sourced from publicly available HDB resale transactions, complemente
 **geospatial analysis:** geopy, geopandas, pygeohash, shapely  
 
 
-# How to run the app locally
+## How to run the app locally
 1. **Clone this repository**
 2. **Ensure Python 3.7+ is installed**
 3. **Install Dependencies**
