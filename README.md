@@ -175,13 +175,13 @@ This notebook walks through the full pipeline:
 
 ## Key Folders in Frontend
 
-- ** assets **
+- **assets**
   Logos and styling libraries used throughout are stored here
-- ** datasets **
+- **datasets**
   Datasets that are being used for the website
-- ** functions **
+- **functions**
   Backend functions that are called in frontend
-- ** models **
+- **models**
   XGBoost and the Quantile values used are stored here
-- ** pages **
+- **pages**
   Each of the pages here correspond to a redirect in the web app
