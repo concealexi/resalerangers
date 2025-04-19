@@ -1,7 +1,6 @@
 import dash
 from dash import html, dcc, register_page, callback, Output, Input, State
 import pandas as pd
-# import dash_leaflet as dl
 
 # Load and merge data
 hdb_df = pd.read_csv("dataset/hdb_final_dataset.csv")
@@ -36,6 +35,7 @@ register_page(__name__, path="/input-general")
 
 layout = html.Div(children =[
     dcc.Location(id='url', refresh=True),
+    # Button to go back to start
     html.Div(
             children=[
                 dcc.Link("< back to start", href="/", style={
@@ -47,7 +47,7 @@ layout = html.Div(children =[
             ],
             style={'marginLeft': '20px', 'marginTop': '20px'}
         ),
-
+    # Title of property details
     html.H1("What property are you looking for?",
             style={
                 'textAlign': 'center',
@@ -68,7 +68,7 @@ layout = html.Div(children =[
                 'color': 'black'
             }
         ),
-
+    # Filter choices for users to input
     html.Div([
         html.Label("Town", style={
             'fontFamily': 'Inter, sans-serif',
@@ -77,7 +77,7 @@ layout = html.Div(children =[
             'display': 'block',
             'textAlign': 'left'
         }),
-
+        # Dropdown for choosing towns
         html.Div([
             dcc.Dropdown(
                 id='newbie-town-dropdown',
@@ -97,7 +97,7 @@ layout = html.Div(children =[
             'justifyContent': 'space-between',
             'marginBottom': '10px'
         }),
-
+        # Instruction to pick 2 towns
         html.P("Please select 2 towns to continue!", style={
             'fontSize': '13px',
             'color': '#777',
@@ -105,7 +105,7 @@ layout = html.Div(children =[
             'textAlign': 'center',
             'marginBottom': '20px'
         }),
-
+        # Dropdown to pick flat type
         html.Label("Flat Type", style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
         dcc.Dropdown(
             id='newbie-flat-type',
@@ -113,7 +113,7 @@ layout = html.Div(children =[
             placeholder='Enter flat type',
             style=common_dropdown_style
         ),
-
+        # Dropdown to pick floor level
         html.Label("Floor Level", style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
         dcc.Dropdown(
             id='newbie-floor-level',
@@ -125,10 +125,11 @@ layout = html.Div(children =[
             placeholder='Enter floor level',
             style=common_dropdown_style
         ),
-
+        # Optional filters
         html.H4("You may also add additional filters for your search!", style={
             'fontFamily': 'Inter, sans-serif', 'marginBottom': '30px'
         }),
+        # Slider to input minimum remaining lease
         html.Div([
                 html.Label('Minimum Remaining Lease (Year)', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
                 html.Div('0-99', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'})
@@ -145,6 +146,7 @@ layout = html.Div(children =[
             'fontSize': '13px', 'color': '#777', 'fontFamily': 'Inter, sans-serif',
             'marginBottom': '30px'
         }),
+        # Slider to choose maximum distance to nearest MRT
         html.Div([
                 html.Label('Distance to nearest MRT (km)', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
                 html.Div('0-2.5', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'})
@@ -161,7 +163,7 @@ layout = html.Div(children =[
             'fontSize': '13px', 'color': '#777', 'fontFamily': 'Inter, sans-serif',
             'marginBottom': '30px'
         }),
-
+        # Slider to choose maximum distance to nearest Primary School
         html.Div([
                 html.Label('Distance to nearest Primary School (km)', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'}),
                 html.Div('0-2.5', style={'fontFamily': 'Inter, sans-serif', 'fontWeight':'bold'})
@@ -179,7 +181,7 @@ layout = html.Div(children =[
             'fontSize': '13px', 'color': '#777', 'fontFamily': 'Inter, sans-serif',
             'marginBottom': '30px'
         }),
-
+        # Submit button
         html.Div([
             html.Button("See Units Now", id="newbie-submit", n_clicks=0, style={
                     'padding': '10px 20px',
@@ -204,6 +206,7 @@ layout = html.Div(children =[
 
 # CALLBACKS
 
+# Callback for dynamic filtering for flat type, only shows types available in both towns
 @callback(
     Output('newbie-flat-type', 'options'),
     Input('newbie-town-dropdown', 'value'),
@@ -233,8 +236,7 @@ def update_flat_type_options(town1, town2):
         for col in common_cols
     ]
 
-
-
+# Saves input of filters to be passed on to output page
 @callback(
     Output('user-filter-store', 'data'),
     Output('url', 'pathname'),
@@ -269,6 +271,7 @@ def save_inputs_and_go(n_clicks, town1, town2, flat_type, floor_level, lease, di
 
     return filter_data, "/output-general"
 
+# Callback to ensure choice of the 2 towns to not be the same
 @callback(
     Output('newbie-town-dropdown_2', 'options'),
     Input('newbie-town-dropdown', 'value')
@@ -281,7 +284,8 @@ def update_second_town_options(town1_selected):
         {'label': town.title(), 'value': town, 'disabled': town == town1_selected}
         for town in towns
     ]
-
+    
+# Callback to ensure choice of the 2 towns to not be the same
 @callback(
     Output('newbie-town-dropdown', 'options'),
     Input('newbie-town-dropdown_2', 'value')
