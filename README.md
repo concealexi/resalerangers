@@ -4,22 +4,16 @@
 Authors: Team Resale Rangers
 
 ## Overview
-Buying a resale HDB flat in Singapore can feel like navigating a maze.Prices vary even within the same town, and current platforms don’t help users assess whether listings are overpriced or reasonable.
+This project is aimed at providing a data-driven tool to assist users in making informed decisions when exploring the HDB resale market in Singapore. We focus on two key user needs: predicting fair resale prices and providing transaction trends and insight on amenities. Users, based on their needs and preferences, can either input a specific flat to receive an instant price prediction, or explore general trends across different towns and flat types.
 
-This project is a visual, data-driven platform designed to help users make informed decisions in Singapore’s HDB resale market.
-It leverages historical transaction data, machine learning predictions, and geospatial filtering to provide price prediction and intuitive visualizations of current trends and pricing context.
-
-The data is provided by Housing Development Board of Singapore. 
-
-The data is available on [data.gov.sg] (https://data.gov.sg/).
-- [Resale Flat Prices] (https://data.gov.sg/collections/189/view)
+The data is sourced from publicly available HDB resale transactions, complemented with auxiliary datasets on MRT stations, schools, hawker centres, and geocoded distances. We believe this project can serve as a valuable reference for homebuyers navigating the resale market and for individuals who want to better understand price dynamics and planning considerations in public housing.
 
 ## Packages used
-**Web framework:** dash, flask  
-**Data processing:** pandas, numpy  
-**Machine learning:** xgboost, joblib  
-**Geospatial utilities:** haversine, geopy, geohash  
-**Visualization:** plotly
+**Front end:** dash
+**Web scraping:** BeautifulSoup, cloudscraper, requests
+**Data handling:** pandas, numpy  
+**Machine learning:** xgboost, RandomizedSearchCV 
+**geospatial analysis:** geopy, geopandas, pygeohash, shapely  
 
 
 # How to run the app locally
