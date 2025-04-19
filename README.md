@@ -8,6 +8,7 @@ This project is aimed at providing a data-driven tool to assist users in making 
 
 The data is sourced from publicly available HDB resale transactions, complemented with auxiliary datasets on MRT stations, schools, hawker centres, and geocoded distances. We believe this project can serve as a valuable reference for homebuyers navigating the resale market and for individuals who want to better understand price dynamics and planning considerations in public housing.
 
+
 ## Packages used  
 **Front end:** Dash, Dashdash_table  <br>
 **Web scraping:** cloudscraper, beautifulsoup4, requests, selenium, fake-useragent  <br>
@@ -16,7 +17,6 @@ The data is sourced from publicly available HDB resale transactions, complemente
 **Geospatial analysis:** geopy, geopandas, pygeohash, shapely  <br>
 **Environment & Deployment:** python-dotenv
 
----
 
 ## How to run the app locally
 1. **Clone this repository**
@@ -45,7 +45,7 @@ The data is sourced from publicly available HDB resale transactions, complemente
    ```text
    http://127.0.0.1:8050
    ```
---- 
+
 
 ## Folder Structure in this Repo
 - **assets**
@@ -75,13 +75,13 @@ The data is sourced from publicly available HDB resale transactions, complemente
 
   Contains the files which were used for data preprocessing, geocoding, geohashing, scraping for datasets, and modelling
 
----
+
 
 ## Backend Folder
 
 This directory contains our end-to-end pipeline for predicting HDB resale prices in Singapore using Random Forest and XGBoost, with enhancements like geospatial feature engineering, asymmetric loss functions, and conformal prediction for uncertainty quantification.
 
----
+
 
 ##  Technologies
 
@@ -112,7 +112,7 @@ Before model training, we performed the following:
   - Enrich feature engineering  
   - Improve dashboard visualizations
 
----
+
 
 ##  `Model_walkthrough.ipynb`
 
@@ -144,7 +144,7 @@ This notebook walks through the full pipeline:
   - Cannot use custom loss functions  
   - Less flexibility when penalizing underestimates
 
----
+
 
 ###  XGBoost (Final Model Chosen)
 
@@ -157,7 +157,7 @@ This notebook walks through the full pipeline:
   - More sensitive to overfitting  
   - Requires careful hyperparameter tuning
 
----
+
 
 ##  Methodologies & `model_tuning.py` Functions
 
@@ -178,7 +178,7 @@ This notebook walks through the full pipeline:
 - **Customization:**
   - To adjust the number of folds (`cv`) or iterations (`n_iter`), edit the `tune` function in `model_tuning.py`
 
----
+
 
 ###  Asymmetric Loss Function
 
@@ -197,7 +197,7 @@ This notebook walks through the full pipeline:
 - **Integration with XGBoost:**
   - Use via `obj` argument in `xgb.train()`
 
----
+
 
 ##  Conformal Prediction
 
