@@ -15,6 +15,7 @@ The data is sourced from publicly available HDB resale transactions, complemente
 **Machine learning:** xgboost, RandomizedSearchCV  <br>
 **Geospatial analysis:** geopy, geopandas, pygeohash, shapely  
 
+---
 
 ## How to run the app locally
 1. **Clone this repository**
@@ -43,6 +44,40 @@ The data is sourced from publicly available HDB resale transactions, complemente
    ```text
    http://127.0.0.1:8050
    ```
+--- 
+
+# Folder Structure in this Repo
+- **assets**
+
+  Contains the styling libraries and icons used in the website
+- **datasets**
+
+  Contains the Datasets that are being used for the website
+
+  1. hdb_final_dataset: final transaction dataset
+  2. all_primary_schools, hawkercentercoord, mrt_stations: amenities dataset
+  3. hdb_informations: information about max level and flat type of HDBs in Singapore
+   
+- **functions**
+
+  Contains backend functions that are called in the frontend for callbacks
+
+- **models**
+
+  Contains the XGBoost model and the Quantile values that were trained and saved from the Backend folder
+  
+- **pages**
+
+  Contains each of the pages in the web app for the redirects and also their corresponding callback logic
+  
+- **backend**
+
+  Contains the files which were used for data preprocessing, geocoding, geohashing, scraping for datasets, and modelling
+
+---
+
+# Backend Folder
+
 This directory contains our end-to-end pipeline for predicting HDB resale prices in Singapore using Random Forest and XGBoost, with enhancements like geospatial feature engineering, asymmetric loss functions, and conformal prediction for uncertainty quantification.
 
 ---
@@ -173,15 +208,3 @@ This notebook walks through the full pipeline:
   conformal_predict(model, X_input, q)
 
 
-## Key Folders in Frontend
-
-- **assets**
-  Logos and styling libraries used throughout are stored here
-- **datasets**
-  Datasets that are being used for the website
-- **functions**
-  Backend functions that are called in frontend
-- **models**
-  XGBoost and the Quantile values used are stored here
-- **pages**
-  Each of the pages here correspond to a redirect in the web app
