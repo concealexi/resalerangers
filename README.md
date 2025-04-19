@@ -10,7 +10,7 @@ The data is sourced from publicly available HDB resale transactions, complemente
 
 
 ## Packages used  
-**Front end:** Dash, Dashdash_table  <br>
+**Front end:** Dash  <br>
 **Web scraping:** cloudscraper, beautifulsoup4, requests, selenium, fake-useragent  <br>
 **Data handling:** pandas, numpy  <br>
 **Machine learning:** scikit-learn, xgboost  <br>
