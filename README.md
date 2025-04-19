@@ -9,11 +9,11 @@ This project is aimed at providing a data-driven tool to assist users in making 
 The data is sourced from publicly available HDB resale transactions, complemented with auxiliary datasets on MRT stations, schools, hawker centres, and geocoded distances. We believe this project can serve as a valuable reference for homebuyers navigating the resale market and for individuals who want to better understand price dynamics and planning considerations in public housing.
 
 ## Packages used
-**Front end:** dash
-**Web scraping:** BeautifulSoup, cloudscraper, requests
-**Data handling:** pandas, numpy  
-**Machine learning:** xgboost, RandomizedSearchCV 
-**geospatial analysis:** geopy, geopandas, pygeohash, shapely  
+**Front end: dash**
+**Web scraping: BeautifulSoup, cloudscraper, requests**
+**Data handling: pandas, numpy**  
+**Machine learning: xgboost, RandomizedSearchCV**
+**geospatial analysis: geopy, geopandas, pygeohash, shapely**
 
 
 ## How to run the app locally
