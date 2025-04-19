@@ -171,3 +171,17 @@ This notebook walks through the full pipeline:
 - **Function Signature:**
   ```python
   conformal_predict(model, X_input, q)
+
+
+## Key Folders in Frontend
+
+- ** assets **
+  Logos and styling libraries used throughout are stored here
+- ** datasets **
+  Datasets that are being used for the website
+- ** functions **
+  Backend functions that are called in frontend
+- ** models **
+  XGBoost and the Quantile values used are stored here
+- ** pages **
+  Each of the pages here correspond to a redirect in the web app
